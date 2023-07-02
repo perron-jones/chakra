@@ -1,0 +1,40 @@
+[versions]
+activity-compose = "1.7.2"
+androidx-junit = "1.1.5"
+appcompat = "1.6.1"
+compose = "1.4.3"
+core-ktx = "1.10.1"
+espresso-core = "3.5.1"
+facebook-soloader = "0.10.5"
+facebook-yoga = "1.19.0"
+junit = "4.13.2"
+lifecycle-runtime-ktx = "2.6.1"
+material = "1.9.0"
+material3 = "1.1.1"
+
+[libraries]
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
+androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+compose = { module = "androidx.compose.ui:ui", version.ref = "compose" }
+compose-graphics = { module = "androidx.compose.ui:ui-graphics", version.ref = "compose" }
+compose-layout = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
+compose-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
+compose-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
+compose-util = { module = "androidx.compose.ui:ui-util", version.ref = "compose" }
+facebook-soloader = { module = "com.facebook.soloader:soloader", version.ref = "facebook-soloader" }
+facebook-yoga = { module = "com.facebook.yoga:yoga", version.ref = "facebook-yoga" }
+google-material = { module = "com.google.android.material:material", version.ref = "material" }
+# Test Libraries
+test-compose-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "compose" }
+test-compose-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "compose" }
+test-androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-junit" }
+test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso-core" }
+test-junit = { module = "junit:junit", version.ref = "junit" }
+
+[plugins]
+
+[bundles]
+
