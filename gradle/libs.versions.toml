@@ -3,7 +3,7 @@ activity-compose = "1.7.2"
 androidx-junit = "1.1.5"
 appcompat = "1.6.1"
 compose = "1.4.3"
-core-ktx = "1.10.1"
+core-ktx = "1.10.0"
 espresso-core = "3.5.1"
 facebook-soloader = "0.10.5"
 facebook-yoga = "1.19.0"
@@ -27,6 +27,7 @@ compose-util = { module = "androidx.compose.ui:ui-util", version.ref = "compose"
 facebook-soloader = { module = "com.facebook.soloader:soloader", version.ref = "facebook-soloader" }
 facebook-yoga = { module = "com.facebook.yoga:yoga", version.ref = "facebook-yoga" }
 google-material = { module = "com.google.android.material:material", version.ref = "material" }
+
 # Test Libraries
 test-compose-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "compose" }
 test-compose-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "compose" }

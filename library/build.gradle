@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    id 'maven-publish' apply true
 }
 
 android {
@@ -32,7 +33,14 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.4.8'
+        kotlinCompilerExtensionVersion '1.4.4'
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
     }
 }
 
@@ -49,4 +57,18 @@ dependencies {
     testImplementation libs.test.junit
     androidTestImplementation libs.test.androidx.junit
     androidTestImplementation libs.test.espresso.core
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'net.obsidianx.chakra'
+            artifactId = 'chakra'
+            version = '1.0.0'
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
 }

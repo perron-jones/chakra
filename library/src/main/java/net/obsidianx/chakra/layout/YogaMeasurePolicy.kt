@@ -1,6 +1,5 @@
-package net.obsidianx.chakra.measure
+package net.obsidianx.chakra.layout
 
-import android.util.Log
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.MeasureResult
@@ -14,7 +13,8 @@ import com.facebook.yoga.YogaNode
 import net.obsidianx.chakra.FlexNodeData
 import kotlin.math.roundToInt
 
-class YogaMeasurePolicy(private val containerNode: YogaNode) : MeasurePolicy {
+class YogaMeasurePolicy(private val containerNode: YogaNode) :
+    MeasurePolicy {
     override fun MeasureScope.measure(
         measurables: List<Measurable>,
         constraints: Constraints
@@ -30,14 +30,16 @@ class YogaMeasurePolicy(private val containerNode: YogaNode) : MeasurePolicy {
             ?.toFloat()
             ?: YogaConstants.UNDEFINED
 
-        Log.d("YogaMeasureContainer", "FLEX: Measuring container: $constraints")
+        if (containerNode.isDirty) {
+            containerNode.calculateLayout(maxWidth, maxHeight)
+        }
 
-        containerNode.calculateLayout(maxWidth, maxHeight)
-
-        val measuredWidth = containerNode.layoutWidth.roundToInt()
-        val measuredHeight = containerNode.layoutHeight.roundToInt()
-
-        Log.d("YogaMeasureContainer", "FLEX: Measured container: ($measuredWidth, $measuredHeight)")
+        val measuredWidth =
+            containerNode.layoutWidth.roundToInt().takeIf { it != Constraints.Infinity }
+                ?: constraints.maxWidth
+        val measuredHeight =
+            containerNode.layoutHeight.roundToInt().takeIf { it != Constraints.Infinity }
+                ?: constraints.maxHeight
 
         // Apply the calculated size to the container
         return layout(measuredWidth, measuredHeight) {
@@ -68,7 +70,11 @@ class YogaMeasurePolicy(private val containerNode: YogaNode) : MeasurePolicy {
                     // New node in container
                     addChildAt(node, index)
                 }
-                node.data = composeViews[index]
+                if (node.data is YogaNode) {
+                    (node.data as YogaNode).data = composeViews[index]
+                } else {
+                    node.data = composeViews[index]
+                }
             }
         }
     }
@@ -76,11 +82,21 @@ class YogaMeasurePolicy(private val containerNode: YogaNode) : MeasurePolicy {
     private fun Placeable.PlacementScope.placeChildren() {
         for (index in 0 until containerNode.childCount) {
             val node = containerNode.getChildAt(index)
-            val measurable = node.data as? Measurable ?: continue
+            val measurable = if (node.data is YogaNode) {
+                (node.data as? YogaNode)?.let {
+                    for (i in 0 until it.childCount) {
+                        it.getChildAt(i).dirty()
+                    }
+                    it.calculateLayout(node.layoutWidth, node.layoutHeight)
+                    it.data as? Measurable
+                }
+            } else {
+                node.data as? Measurable
+            } ?: continue
 
             val paddingStart = node.getLayoutPadding(YogaEdge.START)
-            val paddingEnd = node.getLayoutPadding(YogaEdge.END)
             val paddingTop = node.getLayoutPadding(YogaEdge.TOP)
+            val paddingEnd = node.getLayoutPadding(YogaEdge.END)
             val paddingBottom = node.getLayoutPadding(YogaEdge.BOTTOM)
 
             val childWidth = (node.layoutWidth - paddingStart - paddingEnd).roundToInt()
@@ -95,8 +111,6 @@ class YogaMeasurePolicy(private val containerNode: YogaNode) : MeasurePolicy {
 
             val nodeX = (node.layoutX + paddingStart).roundToInt()
             val nodeY = (node.layoutY + paddingTop).roundToInt()
-
-            Log.d("YogaMeasureContainer", "FLEX: Place[$index]: ($nodeX, $nodeY)")
 
             measurable.measure(childConstraints).place(nodeX, nodeY)
         }

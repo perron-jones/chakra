@@ -4,15 +4,16 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.MultiMeasureLayout
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.debugInspectorInfo
-import androidx.compose.ui.platform.inspectable
 import com.facebook.soloader.SoLoader
 import com.facebook.yoga.YogaNodeFactory
-import net.obsidianx.chakra.measure.YogaMeasurePolicy
+import net.obsidianx.chakra.debug.inspectableFlexContainer
+import net.obsidianx.chakra.layout.YogaMeasurePolicy
+import net.obsidianx.chakra.layout.flexInternal
 
 @Composable
 fun FlexLayout(
@@ -21,6 +22,7 @@ fun FlexLayout(
     content: @Composable FlexLayoutScope.() -> Unit
 ) {
     val context = LocalContext.current
+    val parentNode = LocalFlexContainer.current
 
     val containerNode = remember {
         SoLoader.init(context, false)
@@ -28,21 +30,22 @@ fun FlexLayout(
     }
     style.apply(containerNode)
 
-    MultiMeasureLayout(
+    Layout(
+        content = {
+            CompositionLocalProvider(LocalFlexContainer provides containerNode) {
+                content(FlexLayoutScope())
+            }
+        },
         modifier = modifier
-            .height(IntrinsicSize.Min)
-            .width(IntrinsicSize.Min)
-            .inspectable(inspectorInfo = debugInspectorInfo {
-                style.run {
-                    name = "FlexContainer"
-                    properties["alignContent"] = alignContent.toString()
-                    properties["alignItems"] = alignItems.toString()
-                    properties["direction"] = flexDirection.toString()
-                    properties["justifyContent"] = justifyContent.toString()
-                    properties["wrap"] = wrap.toString()
+            .inspectableFlexContainer(style) {
+                if (parentNode != null) {
+                    flexInternal(style, containerNode)
+                } else {
+                    this
                 }
-            }) { this },
-        content = { content(FlexLayoutScope()) },
-        measurePolicy = YogaMeasurePolicy(containerNode)
+            }
+            .height(IntrinsicSize.Min)
+            .width(IntrinsicSize.Min),
+        measurePolicy = YogaMeasurePolicy(containerNode),
     )
 }

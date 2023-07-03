@@ -6,7 +6,8 @@ import com.facebook.yoga.YogaNode
 import com.facebook.yoga.YogaNodeFactory
 
 data class FlexNodeData(
-    val node: YogaNode = YogaNodeFactory.create()
+    val node: YogaNode = YogaNodeFactory.create(),
+    val containerRoot: YogaNode? = null,
 ) : ParentDataModifier {
     override fun Density.modifyParentData(parentData: Any?) = this@FlexNodeData
 }
