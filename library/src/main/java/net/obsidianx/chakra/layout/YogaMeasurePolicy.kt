@@ -12,9 +12,15 @@ import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaNode
 import com.facebook.yoga.YogaNodeFactory
 import net.obsidianx.chakra.FlexNodeData
+import net.obsidianx.chakra.types.isColumn
+import net.obsidianx.chakra.types.isRow
+import net.obsidianx.chakra.types.isSet
 import kotlin.math.roundToInt
 
-class YogaMeasurePolicy(private val containerNode: YogaNode) :
+class YogaMeasurePolicy(
+    private val containerNode: YogaNode,
+    private val parentNode: YogaNode? = null,
+) :
     MeasurePolicy {
     override fun MeasureScope.measure(
         measurables: List<Measurable>,
@@ -23,11 +29,17 @@ class YogaMeasurePolicy(private val containerNode: YogaNode) :
         syncToYoga(measurables)
 
         val maxWidth = constraints.maxWidth
-            .takeIf { constraints.hasBoundedWidth }
+            .takeIf {
+                constraints.hasBoundedWidth &&
+                        (containerNode.flexGrow > 0f || containerNode.flexBasis.isSet || parentNode?.flexDirection?.isRow != true)
+            }
             ?.toFloat()
             ?: YogaConstants.UNDEFINED
         val maxHeight = constraints.maxHeight
-            .takeIf { constraints.hasBoundedHeight }
+            .takeIf {
+                constraints.hasBoundedHeight &&
+                        (containerNode.flexGrow > 0f || containerNode.flexBasis.isSet || parentNode?.flexDirection?.isColumn != true)
+            }
             ?.toFloat()
             ?: YogaConstants.UNDEFINED
 

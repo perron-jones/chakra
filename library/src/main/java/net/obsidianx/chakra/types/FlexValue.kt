@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 import com.facebook.yoga.YogaEdge
+import com.facebook.yoga.YogaUnit
+import com.facebook.yoga.YogaValue
 
 sealed interface FlexValue {
     object Auto : FlexValue {
@@ -42,3 +44,6 @@ sealed interface FlexValue {
             Value(value.value * LocalDensity.current.density)
     }
 }
+
+val YogaValue.isSet
+    get() = this.unit == YogaUnit.PERCENT || this.unit == YogaUnit.POINT

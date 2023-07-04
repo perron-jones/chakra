@@ -3,7 +3,6 @@ package net.obsidianx.chakra
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
@@ -22,6 +21,7 @@ enum class Page {
     Home,
     Alignment,
     Flex,
+    Offsets,
 }
 
 class MainActivity : ComponentActivity() {
@@ -45,12 +45,16 @@ class MainActivity : ComponentActivity() {
                     Column(modifier = Modifier.padding(all = 8.dp)) {
                         when (page) {
                             Page.Home -> {
-                                Button(onClick = { page = Page.Alignment }) { Text("Alignment") }
-                                Button(onClick = { page = Page.Flex }) { Text("Flex") }
+                                Page.values().forEach {
+                                    if (it != Page.Home) {
+                                        Button(onClick = { page = it }) { Text(it.toString()) }
+                                    }
+                                }
                             }
 
                             Page.Alignment -> Alignment()
                             Page.Flex -> Flex()
+                            Page.Offsets -> Offsets()
                         }
                     }
                 }

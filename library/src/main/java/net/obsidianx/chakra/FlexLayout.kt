@@ -14,6 +14,7 @@ import com.facebook.yoga.YogaNodeFactory
 import net.obsidianx.chakra.debug.inspectableFlexContainer
 import net.obsidianx.chakra.layout.YogaMeasurePolicy
 import net.obsidianx.chakra.layout.flexInternal
+import net.obsidianx.chakra.types.FlexEdges
 
 @Composable
 fun FlexLayout(
@@ -28,7 +29,7 @@ fun FlexLayout(
         SoLoader.init(context, false)
         YogaNodeFactory.create()
     }
-    style.apply(containerNode)
+    style.copy(margin = FlexEdges()).apply(containerNode)
 
     Layout(
         content = {
@@ -39,13 +40,16 @@ fun FlexLayout(
         modifier = modifier
             .inspectableFlexContainer(style) {
                 if (parentNode != null) {
-                    flexInternal(style, containerNode)
+                    flexInternal(
+                        style = style.copy(padding = FlexEdges()),
+                        containerNode = containerNode
+                    )
                 } else {
                     this
                 }
             }
             .height(IntrinsicSize.Min)
             .width(IntrinsicSize.Min),
-        measurePolicy = YogaMeasurePolicy(containerNode),
+        measurePolicy = YogaMeasurePolicy(containerNode, parentNode),
     )
 }

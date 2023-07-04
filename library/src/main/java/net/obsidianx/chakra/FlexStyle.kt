@@ -29,8 +29,8 @@ data class FlexStyle(
     val padding: FlexEdges = FlexEdges(),
     val border: FlexEdges = FlexEdges(),
     val position: FlexEdges = FlexEdges(),
-    val width: FlexValue = FlexValue.Undefined,
-    val height: FlexValue = FlexValue.Undefined,
+    val width: FlexValue = FlexValue.Auto,
+    val height: FlexValue = FlexValue.Auto,
     val minWidth: FlexValue = FlexValue.Undefined,
     val minHeight: FlexValue = FlexValue.Undefined,
     val maxWidth: FlexValue = FlexValue.Undefined,
@@ -67,3 +67,18 @@ data class FlexStyle(
         position.apply(node::setPosition, node::setPositionPercent)
     }
 }
+
+internal fun FlexStyle.forContainer() = FlexStyle(
+    flexDirection = flexDirection,
+    justifyContent = justifyContent,
+    alignItems = alignItems,
+    alignContent = alignContent,
+    wrap = wrap,
+    width = width,
+    height = height,
+    minWidth = minWidth,
+    minHeight = minHeight,
+    maxWidth = maxWidth,
+    maxHeight = maxHeight,
+    padding = padding
+)

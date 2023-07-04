@@ -2,12 +2,18 @@ package net.obsidianx.chakra
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import net.obsidianx.chakra.types.FlexAlign
 import net.obsidianx.chakra.types.FlexDirection
+import net.obsidianx.chakra.types.FlexJustify
 import net.obsidianx.chakra.types.FlexValue
+import net.obsidianx.chakra.types.FlexWrap
 
 @Composable
 fun Flex() {
@@ -64,7 +70,7 @@ fun Flex() {
         Heading("Vertical")
 
         SubHeading("Default style")
-        FlexColumn {
+        FlexColumn(height = FlexValue.Dp(200.dp)) {
             OutlinedText("One")
             OutlinedText("Two")
             OutlinedText("Three")
@@ -76,7 +82,7 @@ fun Flex() {
             flexShrink = 1f,
             flexBasis = FlexValue.Percent(100f)
         ).let { style ->
-            FlexColumn {
+            FlexColumn(height = FlexValue.Dp(200.dp)) {
                 OutlinedText("One", style)
                 OutlinedText("Two", style)
                 OutlinedText("Three", style)
@@ -84,21 +90,21 @@ fun Flex() {
         }
 
         SubHeading("Only set single to: grow: 1")
-        FlexColumn {
+        FlexColumn(height = FlexValue.Dp(200.dp)) {
             OutlinedText("One")
             OutlinedText("Two", FlexStyle(flexGrow = 1f))
             OutlinedText("Three")
         }
 
         SubHeading("Basis")
-        FlexColumn {
+        FlexColumn(height = FlexValue.Dp(200.dp)) {
             OutlinedText("One")
             OutlinedText("Basis: 25%", FlexStyle(flexBasis = FlexValue.Percent(25f)))
             OutlinedText("Basis: 50%", FlexStyle(flexBasis = FlexValue.Percent(50f)))
         }
 
         SubHeading("Basis + Split remaining space")
-        FlexColumn {
+        FlexColumn(height = FlexValue.Dp(200.dp)) {
             OutlinedText("One")
             OutlinedText(
                 "Basis: 25%; Grow: 1",
@@ -109,25 +115,16 @@ fun Flex() {
                 FlexStyle(flexBasis = FlexValue.Percent(50f), flexGrow = 1f)
             )
         }
-    }
-}
 
-@Composable
-fun FlexRow(content: @Composable FlexLayoutScope.() -> Unit) {
-    FlexLayout(
-        style = FlexStyle(flexDirection = FlexDirection.Row),
-        modifier = Modifier.border(width = 1.dp, color = Color.Red.copy(alpha = 0.5f))
-    ) {
-        content()
-    }
-}
+        SubHeading("Nested layouts")
+        FlexColumn(height = FlexValue.Dp(200.dp)) {
+            FlexColumn(height = FlexValue.Undefined) {
+                OutlinedText("One")
+            }
 
-@Composable
-fun FlexColumn(content: @Composable FlexLayoutScope.() -> Unit) {
-    FlexLayout(
-        style = FlexStyle(flexDirection = FlexDirection.Column, height = FlexValue.Dp(200.dp)),
-        modifier = Modifier.border(width = 1.dp, color = Color.Red.copy(alpha = 0.5f))
-    ) {
-        content()
+            FlexColumn(height = FlexValue.Undefined) {
+                OutlinedText("Two")
+            }
+        }
     }
 }

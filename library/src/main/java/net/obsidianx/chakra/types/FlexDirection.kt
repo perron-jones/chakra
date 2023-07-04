@@ -8,3 +8,9 @@ enum class FlexDirection(val yogaValue: YogaFlexDirection) {
     Column(YogaFlexDirection.COLUMN),
     ColumnReverse(YogaFlexDirection.COLUMN_REVERSE)
 }
+
+val YogaFlexDirection.isRow
+    get() = this == YogaFlexDirection.ROW || this == YogaFlexDirection.ROW_REVERSE
+
+val YogaFlexDirection.isColumn
+    get() = this == YogaFlexDirection.COLUMN || this == YogaFlexDirection.COLUMN_REVERSE

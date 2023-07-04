@@ -103,6 +103,7 @@ fun Alignment() {
 fun FlexBox(
     modifier: Modifier = Modifier,
     style: FlexStyle = FlexStyle(),
+    tag: String? = null,
     content: @Composable FlexLayoutScope.() -> Unit
 ) {
     FlexLayout(
@@ -110,6 +111,7 @@ fun FlexBox(
             width = FlexValue.Dp(value = 100.dp),
             height = FlexValue.Dp(value = 100.dp),
         ),
+        tag = tag,
         modifier = modifier.border(width = 1.dp, color = Color.Red.copy(alpha = 0.5f))
     ) {
         content()
