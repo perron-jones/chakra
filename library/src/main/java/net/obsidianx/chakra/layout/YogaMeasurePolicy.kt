@@ -10,6 +10,7 @@ import androidx.compose.ui.util.fastForEachIndexed
 import com.facebook.yoga.YogaConstants
 import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaNode
+import com.facebook.yoga.YogaNodeFactory
 import net.obsidianx.chakra.FlexNodeData
 import kotlin.math.roundToInt
 
@@ -48,10 +49,21 @@ class YogaMeasurePolicy(private val containerNode: YogaNode) :
     }
 
     private fun syncToYoga(measurables: List<Measurable>) {
-        // Only handle views that have the .flex() modifier
-        val composeViews = measurables.filter { it.parentData is FlexNodeData }
-        // Cast the parentData to FlexNodeData and cache the results for use later
-        val yogaNodes = composeViews.map { (it.parentData as FlexNodeData).node }
+        // Fetch the cached node from a .flex() modifier, or create a temporary one for this pass
+        val yogaNodes = measurables.mapIndexed { index, measurable ->
+            // get the node attached to the measurable
+            (measurable.parentData as? FlexNodeData)?.node
+                ?: if (containerNode.childCount > index) {
+                    // or attempt to find it in the yoga layout
+                    containerNode.getChildAt(index).takeIf { it.data == measurable }
+                } else {
+                    null
+                    // otherwise create a new one
+                } ?: YogaNodeFactory.create().also {
+                    it.setMeasureFunction(::measureNode)
+                    it.data = measurable
+                }
+        }
 
         containerNode.run {
             // Remove excess nodes if there are fewer this pass than the previous pass
@@ -71,9 +83,9 @@ class YogaMeasurePolicy(private val containerNode: YogaNode) :
                     addChildAt(node, index)
                 }
                 if (node.data is YogaNode) {
-                    (node.data as YogaNode).data = composeViews[index]
+                    (node.data as YogaNode).data = measurables[index]
                 } else {
-                    node.data = composeViews[index]
+                    node.data = measurables[index]
                 }
             }
         }

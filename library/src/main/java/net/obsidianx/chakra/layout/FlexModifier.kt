@@ -22,4 +22,4 @@ internal fun Modifier.flexInternal(
 
     style.apply(flexNode)
     FlexNodeData(node = flexNode)
-}.yogaLayout()
+}

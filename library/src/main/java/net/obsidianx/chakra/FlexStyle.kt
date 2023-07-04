@@ -23,7 +23,7 @@ data class FlexStyle(
     val display: FlexDisplay = FlexDisplay.Flex,
     val flex: Float? = 0f,
     val flexGrow: Float? = 0f,
-    val flexShrink: Float? = 0f,
+    val flexShrink: Float? = 1f,
     val flexBasis: FlexValue = FlexValue.Auto,
     val margin: FlexEdges = FlexEdges(),
     val padding: FlexEdges = FlexEdges(),
