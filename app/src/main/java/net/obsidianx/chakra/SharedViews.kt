@@ -8,9 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.obsidianx.chakra.types.FlexDirection
+import net.obsidianx.chakra.types.FlexEdges
 import net.obsidianx.chakra.types.FlexValue
 
 @Composable
@@ -36,21 +38,23 @@ fun SubHeading(text: String) {
 @Composable
 fun FlexLayoutScope.OutlinedText(text: String, style: FlexStyle = FlexStyle()) {
     Text(
-        text, modifier = Modifier
+        text,
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
             .border(width = 1.dp, color = Color.Blue)
-            .flex(style)
+            .flex(style.copy(padding = FlexEdges(all = FlexValue.Dp(value = 4.dp))))
     )
 }
 
 @Composable
 fun FlexRow(
     style: FlexStyle = FlexStyle(),
-    tag: String? = null,
     content: @Composable FlexLayoutScope.() -> Unit
 ) {
     FlexLayout(
         style = style.copy(flexDirection = FlexDirection.Row),
-        tag = tag,
         modifier = Modifier.border(width = 1.dp, color = Color.Red.copy(alpha = 0.5f))
     ) {
         content()
@@ -61,13 +65,11 @@ fun FlexRow(
 fun FlexColumn(
     height: FlexValue = FlexValue.Undefined,
     style: FlexStyle = FlexStyle(),
-    tag: String? = null,
     content: @Composable FlexLayoutScope.() -> Unit
 ) {
     FlexLayout(
         style = style.copy(flexDirection = FlexDirection.Column, height = height),
         modifier = Modifier.border(width = 1.dp, color = Color.Red.copy(alpha = 0.5f)),
-        tag = tag,
     ) {
         content()
     }
