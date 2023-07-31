@@ -1,10 +1,10 @@
 package net.obsidianx.chakra.layout
 
-import androidx.compose.ui.layout.Measurable
-import androidx.compose.ui.unit.Constraints
+import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaMeasureMode
 import com.facebook.yoga.YogaMeasureOutput
 import com.facebook.yoga.YogaNode
+import net.obsidianx.chakra.types.FlexNodeData
 import kotlin.math.min
 
 fun measureNode(
@@ -14,18 +14,19 @@ fun measureNode(
     height: Float,
     heightMode: YogaMeasureMode
 ): Long {
-    val measurable = (node.data as? YogaNode)?.data as? Measurable
-        ?: node.data as? Measurable
+    val placeable = (node.data as? FlexNodeData)?.placeable
         ?: return 0
 
-    val maxWidth = width.takeIf { !it.isNaN() } ?: Constraints.Infinity
-    val maxHeight = height.takeIf { !it.isNaN() } ?: Constraints.Infinity
+    val paddingStart = node.getLayoutPadding(YogaEdge.START)
+    val paddingTop = node.getLayoutPadding(YogaEdge.TOP)
+    val paddingEnd = node.getLayoutPadding(YogaEdge.END)
+    val paddingBottom = node.getLayoutPadding(YogaEdge.BOTTOM)
 
-    val intrinsicWidth = measurable.maxIntrinsicWidth(maxHeight.toInt())
-    val intrinsicHeight = measurable.maxIntrinsicHeight(maxWidth.toInt())
+    val intrinsicWidth = placeable.width + paddingStart + paddingEnd
+    val intrinsicHeight = placeable.height + paddingTop + paddingBottom
 
-    val measuredWidth = reconcile(widthMode, width, intrinsicWidth.toFloat())
-    val measuredHeight = reconcile(heightMode, height, intrinsicHeight.toFloat())
+    val measuredWidth = reconcile(widthMode, width, intrinsicWidth)
+    val measuredHeight = reconcile(heightMode, height, intrinsicHeight)
 
     return YogaMeasureOutput.make(measuredWidth, measuredHeight)
 }

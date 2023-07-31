@@ -22,6 +22,8 @@ enum class Page {
     Alignment,
     Flex,
     Offsets,
+    NestedLayouts,
+    Shrink,
 }
 
 class MainActivity : ComponentActivity() {
@@ -55,6 +57,8 @@ class MainActivity : ComponentActivity() {
                             Page.Alignment -> Alignment()
                             Page.Flex -> Flex()
                             Page.Offsets -> Offsets()
+                            Page.NestedLayouts -> NestedLayouts()
+                            Page.Shrink -> Shrink()
                         }
                     }
                 }

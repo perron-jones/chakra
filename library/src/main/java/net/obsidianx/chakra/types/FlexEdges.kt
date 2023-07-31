@@ -1,18 +1,19 @@
 package net.obsidianx.chakra.types
 
-import androidx.compose.ui.platform.ValueElementSequence
 import com.facebook.yoga.YogaEdge
+import com.facebook.yoga.YogaUnit
+import com.facebook.yoga.YogaValue
 
 data class FlexEdges(
-    val left: FlexValue = FlexValue.Undefined,
-    val top: FlexValue = FlexValue.Undefined,
-    val right: FlexValue = FlexValue.Undefined,
-    val bottom: FlexValue = FlexValue.Undefined,
-    val start: FlexValue = FlexValue.Undefined,
-    val end: FlexValue = FlexValue.Undefined,
-    val horizontal: FlexValue = FlexValue.Undefined,
-    val vertical: FlexValue = FlexValue.Undefined,
-    val all: FlexValue = FlexValue.Undefined,
+    val left: YogaValue = YOGA_UNDEFINED,
+    val top: YogaValue = YOGA_UNDEFINED,
+    val right: YogaValue = YOGA_UNDEFINED,
+    val bottom: YogaValue = YOGA_UNDEFINED,
+    val start: YogaValue = YOGA_UNDEFINED,
+    val end: YogaValue = YOGA_UNDEFINED,
+    val horizontal: YogaValue = YOGA_UNDEFINED,
+    val vertical: YogaValue = YOGA_UNDEFINED,
+    val all: YogaValue = YOGA_UNDEFINED,
 ) {
     private val typeMap = mapOf(
         YogaEdge.LEFT to left,
@@ -27,43 +28,21 @@ data class FlexEdges(
     )
 
     fun apply(
-        setValue: (edge: YogaEdge, value: Float) -> Unit,
-        setPercent: ((edge: YogaEdge, value: Float) -> Unit)? = null,
-        setAuto: ((edge: YogaEdge) -> Unit)? = null
+        setPoint: (YogaEdge, Float) -> Unit,
+        setPercent: ((YogaEdge, Float) -> Unit)? = null,
+        setAuto: ((YogaEdge) -> Unit)? = null,
     ) {
+        val fallback: (YogaEdge) -> Unit = { edge -> setPoint.invoke(edge, Float.NaN) }
+
         typeMap.entries.forEach { edge ->
-            when (edge.value) {
-                is FlexValue.Value -> setValue(
-                    edge.key,
-                    (edge.value as FlexValue.Value).value
-                )
+            when (edge.value.unit) {
+                YogaUnit.POINT -> setPoint(edge.key, edge.value.value)
+                YogaUnit.PERCENT -> setPercent?.invoke(edge.key, edge.value.value)
+                    ?: fallback(edge.key)
 
-                is FlexValue.Percent -> setPercent?.invoke(
-                    edge.key,
-                    (edge.value as FlexValue.Percent).value
-                )
-
-                is FlexValue.Auto -> setAuto?.invoke(edge.key) ?: setValue.invoke(
-                    edge.key,
-                    Float.NaN
-                )
+                YogaUnit.AUTO -> setAuto?.invoke(edge.key)
+                else -> fallback(edge.key)
             }
-        }
-    }
-
-    fun inspectorProps(type: String, properties: ValueElementSequence) {
-        var hasValue = false
-        typeMap.entries.forEach { edge ->
-            if (edge.value !is FlexValue.Undefined) {
-                val edgeName = edge.key.toString()
-                    .lowercase()
-                    .replaceFirstChar { it.uppercaseChar() }
-                properties["$type$edgeName"] = edge.value.toString()
-                hasValue = true
-            }
-        }
-        if (!hasValue) {
-            properties[type] = "Undefined"
         }
     }
 }

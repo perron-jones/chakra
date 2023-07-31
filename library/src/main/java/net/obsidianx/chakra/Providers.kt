@@ -1,7 +1,6 @@
 package net.obsidianx.chakra
 
 import androidx.compose.runtime.compositionLocalOf
-import com.facebook.yoga.YogaConfig
-import com.facebook.yoga.YogaNode
+import net.obsidianx.chakra.layout.FlexLayoutState
 
-internal val LocalFlexContainer = compositionLocalOf<YogaNode?> { null }
+internal val LocalFlexLayoutState = compositionLocalOf<FlexLayoutState?> { null }

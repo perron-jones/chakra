@@ -6,11 +6,13 @@ enum class FlexDirection(val yogaValue: YogaFlexDirection) {
     Row(YogaFlexDirection.ROW),
     RowReverse(YogaFlexDirection.ROW_REVERSE),
     Column(YogaFlexDirection.COLUMN),
-    ColumnReverse(YogaFlexDirection.COLUMN_REVERSE)
+    ColumnReverse(YogaFlexDirection.COLUMN_REVERSE);
+
+    fun isRow(): Boolean {
+        return this == Row || this == RowReverse
+    }
+
+    fun isColumn(): Boolean {
+        return this == Column || this == ColumnReverse
+    }
 }
-
-val YogaFlexDirection.isRow
-    get() = this == YogaFlexDirection.ROW || this == YogaFlexDirection.ROW_REVERSE
-
-val YogaFlexDirection.isColumn
-    get() = this == YogaFlexDirection.COLUMN || this == YogaFlexDirection.COLUMN_REVERSE
