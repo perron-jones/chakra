@@ -1,6 +1,5 @@
 package net.obsidianx.chakra.types
 
-import androidx.compose.ui.unit.Constraints
 import com.facebook.yoga.YogaAlign
 import com.facebook.yoga.YogaDisplay
 import com.facebook.yoga.YogaFlexDirection
@@ -11,7 +10,6 @@ import com.facebook.yoga.YogaPositionType
 import com.facebook.yoga.YogaUnit
 import com.facebook.yoga.YogaValue
 import com.facebook.yoga.YogaWrap
-import net.obsidianx.chakra.layout.constraintValue
 
 internal val YOGA_AUTO = YogaValue(Float.NaN, YogaUnit.AUTO)
 internal val YOGA_UNDEFINED = YogaValue(Float.NaN, YogaUnit.UNDEFINED)

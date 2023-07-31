@@ -1,5 +1,6 @@
 package net.obsidianx.chakra
 
+import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -7,10 +8,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import com.facebook.soloader.SoLoader
 import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaNodeFactory
+import net.obsidianx.chakra.debug.DEFAULT_LOG_TAG
+import net.obsidianx.chakra.debug.DebugDumpFlag
+import net.obsidianx.chakra.debug.address
+import net.obsidianx.chakra.debug.dump
 import net.obsidianx.chakra.layout.FlexLayoutState
 import net.obsidianx.chakra.layout.deepDirty
 import net.obsidianx.chakra.layout.getChildOrNull
@@ -22,8 +28,14 @@ import net.obsidianx.chakra.types.FlexNodeData
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
-private fun (@Composable () -> Unit).withState(state: FlexLayoutState): @Composable () -> Unit = {
-    CompositionLocalProvider(LocalFlexLayoutState provides state) {
+private fun (@Composable () -> Unit).withProviders(
+    state: FlexLayoutState,
+    debugDumpFlags: Set<DebugDumpFlag>? = null,
+): @Composable () -> Unit = {
+    CompositionLocalProvider(
+        LocalFlexLayoutState provides state,
+        LocalDebugDumpFlags provides debugDumpFlags
+    ) {
         this()
     }
 }
@@ -35,6 +47,7 @@ fun Flexbox(
 ) {
     val context = LocalContext.current
     val parentLayoutState = LocalFlexLayoutState.current
+    val treeDebugFlags = LocalDebugDumpFlags.current
     // Passed down to child views when doing subcompose passes
     val myLayoutState = FlexLayoutState()
     val mod = modifier.flexboxParentData()
@@ -65,35 +78,53 @@ fun Flexbox(
 
         if (intrinsicPass) {
             // Add to parent layout, if there is one
-            if (containerNode.owner == null) {
-                parentLayoutState?.parent?.addChildAt(containerNode, parentLayoutState.childIndex)
+            if (containerNode.owner == null && parentLayoutState?.parent != null) {
+                if (parentLayoutState.childIndex <= (parentLayoutState.parent?.childCount ?: -1)) {
+                    parentLayoutState.parent?.addChildAt(
+                        containerNode,
+                        parentLayoutState.childIndex
+                    )
+                } else {
+                    Log.w(
+                        "Chakra",
+                        "[${containerNode.address}] Orphaned child view, tried to add to ${parentLayoutState.parent}"
+                    )
+                    return@SubcomposeLayout layout(0, 0) {}
+                }
             }
 
             // Remove all child nodes; they'll be re-added during subcompose
             containerNode.removeAllChildren()
 
             // Gather child view intrinsic sizes
-            val intrinsicChildren = subcompose("intrinsic", content.withState(myLayoutState))
-                .mapIndexed { index, child ->
-                    myLayoutState.childIndex = index
-                    child.measure(Constraints()).also { childPlaceable ->
-                        val childNodeData =
-                            (childPlaceable.parentData as? FlexNodeData) ?: FlexNodeData()
+            val intrinsicChildren =
+                subcompose(
+                    "intrinsic",
+                    content.withProviders(
+                        myLayoutState,
+                        containerNodeData.debugDumpFlags ?: treeDebugFlags
+                    )
+                )
+                    .mapIndexed { index, child ->
+                        myLayoutState.childIndex = index
+                        child.measure(Constraints()).also { childPlaceable ->
+                            val childNodeData =
+                                (childPlaceable.parentData as? FlexNodeData) ?: FlexNodeData()
 
-                        (containerNode.getChildOrNull(index)
-                            ?: YogaNodeFactory.create().also { node ->
-                                // add to parent if this is a new node
-                                containerNode.addChildAt(node, index)
-                            }).apply {
-                            if (childCount == 0) {
-                                setMeasureFunction(::measureNode)
+                            (containerNode.getChildOrNull(index)
+                                ?: YogaNodeFactory.create().also { node ->
+                                    // add to parent if this is a new node
+                                    containerNode.addChildAt(node, index)
+                                }).apply {
+                                if (childCount == 0) {
+                                    setMeasureFunction(::measureNode)
+                                }
+                                childNodeData.placeable = childPlaceable
+                                data = childNodeData
+                                childNodeData.style.apply(this)
                             }
-                            childNodeData.placeable = childPlaceable
-                            data = childNodeData
-                            childNodeData.style.apply(this)
                         }
                     }
-                }
 
             while (containerNode.childCount > intrinsicChildren.size) {
                 containerNode.removeChildAt(containerNode.childCount - 1)
@@ -137,7 +168,13 @@ fun Flexbox(
             }
 
             // Assign dimensions calculated in flex to views
-            val childViews = subcompose("remeasure", content.withState(myLayoutState))
+            val childViews = subcompose(
+                "remeasure",
+                content.withProviders(
+                    myLayoutState,
+                    containerNodeData.debugDumpFlags ?: treeDebugFlags
+                )
+            )
             val measuredChildren = childViews.mapIndexed { index, child ->
                 if (containerNode.childCount <= index) {
                     return@mapIndexed child.measure(Constraints())
@@ -204,6 +241,20 @@ fun Flexbox(
             }.also {
                 myLayoutState.remeasure = false
                 myLayoutState.layoutComplete = true
+
+                // Only dump the layout if we're the top-most node with flexDebugDump()
+                val debugFlags = containerNodeData.debugDumpFlags ?: treeDebugFlags
+                if ((treeDebugFlags == null || parentLayoutState?.layoutComplete == true) && debugFlags != null) {
+                    debugFlags.let { flags ->
+                        containerNode.dump(flags = flags).split("\n")
+                            .fastForEach {
+                                Log.d(
+                                    containerNodeData.debugLogTag ?: DEFAULT_LOG_TAG,
+                                    it
+                                )
+                            }
+                    }
+                }
             }
         }
 

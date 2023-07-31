@@ -17,10 +17,10 @@ fun measureNode(
     val placeable = (node.data as? FlexNodeData)?.placeable
         ?: return 0
 
-    val paddingStart = node.getLayoutPadding(YogaEdge.START)
-    val paddingTop = node.getLayoutPadding(YogaEdge.TOP)
-    val paddingEnd = node.getLayoutPadding(YogaEdge.END)
-    val paddingBottom = node.getLayoutPadding(YogaEdge.BOTTOM)
+    val paddingStart = node.getPadding(YogaEdge.START).asFloatOrZero
+    val paddingTop = node.getPadding(YogaEdge.TOP).asFloatOrZero
+    val paddingEnd = node.getPadding(YogaEdge.END).asFloatOrZero
+    val paddingBottom = node.getPadding(YogaEdge.BOTTOM).asFloatOrZero
 
     val intrinsicWidth = placeable.width + paddingStart + paddingEnd
     val intrinsicHeight = placeable.height + paddingTop + paddingBottom

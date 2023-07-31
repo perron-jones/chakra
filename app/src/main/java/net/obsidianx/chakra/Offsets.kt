@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import net.obsidianx.chakra.debug.flexDebugTag
 import net.obsidianx.chakra.modifiers.flexBasis
 import net.obsidianx.chakra.modifiers.flexBorder
-import net.obsidianx.chakra.modifiers.flexDebugTag
 import net.obsidianx.chakra.modifiers.flexGap
 import net.obsidianx.chakra.modifiers.flexGrow
 import net.obsidianx.chakra.modifiers.flexHeight

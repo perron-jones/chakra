@@ -20,7 +20,3 @@ fun Modifier.flexAspectRatio(aspectRatio: Float? = null) = flexboxParentData {
 fun Modifier.flexPositionType(positionType: FlexPositionType) = flexboxParentData {
     style.positionType = positionType.yogaValue
 }
-
-fun Modifier.flexDebugTag(tag: String) = flexboxParentData {
-    debugTag = tag
-}
