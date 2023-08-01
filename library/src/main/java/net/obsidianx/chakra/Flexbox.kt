@@ -28,30 +28,43 @@ import net.obsidianx.chakra.types.FlexNodeData
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
-private fun (@Composable () -> Unit).withProviders(
-    state: FlexLayoutState,
+private fun (@Composable FlexboxScope.() -> Unit).withProviders(
+    scope: FlexboxScope,
     debugDumpFlags: Set<DebugDumpFlag>? = null,
 ): @Composable () -> Unit = {
     CompositionLocalProvider(
-        LocalFlexLayoutState provides state,
         LocalDebugDumpFlags provides debugDumpFlags
     ) {
-        this()
+        this(scope)
     }
+}
+
+@Composable
+fun FlexboxScope.Flexbox(
+    modifier: Modifier = Modifier,
+    content: @Composable FlexboxScope.() -> Unit
+) {
+    Flexbox(
+        modifier = modifier,
+        parentLayoutState = parentLayoutState,
+        content = content
+    )
 }
 
 @Composable
 fun Flexbox(
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
+    parentLayoutState: FlexLayoutState? = null,
+    content: @Composable FlexboxScope.() -> Unit
 ) {
     val context = LocalContext.current
-    val parentLayoutState = LocalFlexLayoutState.current
     val treeDebugFlags = LocalDebugDumpFlags.current
     // Passed down to child views when doing subcompose passes
     val myLayoutState = FlexLayoutState()
     val mod = modifier.flexboxParentData()
     SoLoader.init(context, false)
+
+    val scope = FlexboxScope(myLayoutState)
 
     // Test opposites to ensure both are true on a root node
     val intrinsicPass = parentLayoutState?.remeasure != true || parentLayoutState.layoutComplete
@@ -101,7 +114,7 @@ fun Flexbox(
                 subcompose(
                     "intrinsic",
                     content.withProviders(
-                        myLayoutState,
+                        scope,
                         containerNodeData.debugDumpFlags ?: treeDebugFlags
                     )
                 )
@@ -171,7 +184,7 @@ fun Flexbox(
             val childViews = subcompose(
                 "remeasure",
                 content.withProviders(
-                    myLayoutState,
+                    scope,
                     containerNodeData.debugDumpFlags ?: treeDebugFlags
                 )
             )

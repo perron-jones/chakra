@@ -50,7 +50,7 @@ fun OutlinedText(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun FlexRow(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun FlexRow(modifier: Modifier = Modifier, content: @Composable FlexboxScope.() -> Unit) {
     Flexbox(
         modifier = modifier
             .flexDirection(FlexDirection.Row)
@@ -61,7 +61,29 @@ fun FlexRow(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
 }
 
 @Composable
-fun FlexColumn(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun FlexboxScope.FlexRow(modifier: Modifier = Modifier, content: @Composable FlexboxScope.() -> Unit) {
+    Flexbox(
+        modifier = modifier
+            .flexDirection(FlexDirection.Row)
+            .border(width = 1.dp, color = Color.Red.copy(alpha = 0.5f))
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun FlexColumn(modifier: Modifier = Modifier, content: @Composable FlexboxScope.() -> Unit) {
+    Flexbox(
+        modifier = modifier
+            .flexDirection(FlexDirection.Column)
+            .border(width = 1.dp, color = Color.Red.copy(alpha = 0.5f))
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun FlexboxScope.FlexColumn(modifier: Modifier = Modifier, content: @Composable FlexboxScope.() -> Unit) {
     Flexbox(
         modifier = modifier
             .flexDirection(FlexDirection.Column)

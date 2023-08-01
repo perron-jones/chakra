@@ -2,7 +2,6 @@ package net.obsidianx.chakra
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,7 +18,7 @@ import net.obsidianx.chakra.modifiers.flexWidth
 import net.obsidianx.chakra.types.FlexDirection
 
 @Composable
-fun GreenBox(content: @Composable () -> Unit) {
+fun FlexboxScope.GreenBox(content: @Composable FlexboxScope.() -> Unit) {
     Flexbox(
         modifier = Modifier
             .flexWidth(100.dp)
@@ -33,7 +32,7 @@ fun GreenBox(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun BlueBox(content: (@Composable () -> Unit)? = null) {
+fun FlexboxScope.BlueBox(content: (@Composable FlexboxScope.() -> Unit)? = null) {
     Flexbox(
         modifier = Modifier
             .flexWidth(40.dp)
@@ -44,12 +43,12 @@ fun BlueBox(content: (@Composable () -> Unit)? = null) {
             .background(Color.Blue)
             .border(width = 1.dp, color = Color.Yellow)
     ) {
-        content?.invoke()
+        content?.invoke(this)
     }
 }
 
 @Composable
-fun MagentaBox(content: @Composable () -> Unit = {}) {
+fun FlexboxScope.MagentaBox(content: @Composable FlexboxScope.() -> Unit = {}) {
     Flexbox(
         modifier = Modifier
             .flexWidth(20.dp)
