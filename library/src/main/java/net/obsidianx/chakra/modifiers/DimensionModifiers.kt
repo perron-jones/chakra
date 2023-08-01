@@ -77,3 +77,7 @@ fun Modifier.flexMaxHeight(percent: Float) = flexboxParentData {
 fun Modifier.flexMaxHeight(type: FlexUnit) = flexboxParentData {
     style.maxHeight = YogaValue(Float.NaN, type.yogaValue)
 }
+
+fun Modifier.flexFitMinContent() = flexboxParentData {
+    fitMinContent = true
+}

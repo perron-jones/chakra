@@ -24,6 +24,7 @@ enum class Page {
     Offsets,
     NestedLayouts,
     Shrink,
+    DisconnectedLayout,
 }
 
 class MainActivity : ComponentActivity() {
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
                             Page.Offsets -> Offsets()
                             Page.NestedLayouts -> NestedLayouts()
                             Page.Shrink -> Shrink()
+                            Page.DisconnectedLayout -> DisconnectedLayout()
                         }
                     }
                 }

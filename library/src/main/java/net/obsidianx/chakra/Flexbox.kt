@@ -26,6 +26,7 @@ import net.obsidianx.chakra.layout.removeAllChildren
 import net.obsidianx.chakra.modifiers.flexboxParentData
 import net.obsidianx.chakra.types.FlexNodeData
 import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 private fun (@Composable FlexboxScope.() -> Unit).withProviders(
@@ -109,6 +110,9 @@ fun Flexbox(
             // Remove all child nodes; they'll be re-added during subcompose
             containerNode.removeAllChildren()
 
+            var minContentWidth = 0
+            var minContentHeight = 0
+
             // Gather child view intrinsic sizes
             val intrinsicChildren =
                 subcompose(
@@ -123,6 +127,9 @@ fun Flexbox(
                         child.measure(Constraints()).also { childPlaceable ->
                             val childNodeData =
                                 (childPlaceable.parentData as? FlexNodeData) ?: FlexNodeData()
+
+                            minContentWidth = max(childPlaceable.measuredWidth, minContentWidth)
+                            minContentHeight = max(childPlaceable.measuredHeight, minContentHeight)
 
                             (containerNode.getChildOrNull(index)
                                 ?: YogaNodeFactory.create().also { node ->
@@ -143,8 +150,15 @@ fun Flexbox(
                 containerNode.removeChildAt(containerNode.childCount - 1)
             }
 
-            containerNode.getConstraints(from = constraints).let { yogaConstraints ->
-                containerNode.calculateLayout(yogaConstraints[0], yogaConstraints[1])
+            containerNode.getConstraints(
+                from = constraints,
+                parentNode = parentLayoutState?.parent,
+            ).let { yogaConstraints ->
+                val width = minContentWidth.takeIf { containerNodeData.fitMinContent }?.toFloat()
+                    ?: yogaConstraints[0]
+                val height = minContentHeight.takeIf { containerNodeData.fitMinContent }?.toFloat()
+                    ?: yogaConstraints[1]
+                containerNode.calculateLayout(width, height)
             }
         }
 
