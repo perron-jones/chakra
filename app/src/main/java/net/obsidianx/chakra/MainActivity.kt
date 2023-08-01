@@ -25,6 +25,7 @@ enum class Page {
     NestedLayouts,
     Shrink,
     DisconnectedLayout,
+    DepthLayout,
 }
 
 class MainActivity : ComponentActivity() {
@@ -61,6 +62,7 @@ class MainActivity : ComponentActivity() {
                             Page.NestedLayouts -> NestedLayouts()
                             Page.Shrink -> Shrink()
                             Page.DisconnectedLayout -> DisconnectedLayout()
+                            Page.DepthLayout -> DepthLayout()
                         }
                     }
                 }

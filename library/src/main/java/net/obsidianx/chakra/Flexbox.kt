@@ -13,14 +13,18 @@ import androidx.compose.ui.util.fastForEachIndexed
 import com.facebook.soloader.SoLoader
 import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaNodeFactory
+import com.facebook.yoga.YogaUnit
+import com.facebook.yoga.YogaValue
 import net.obsidianx.chakra.debug.DEFAULT_LOG_TAG
 import net.obsidianx.chakra.debug.DebugDumpFlag
 import net.obsidianx.chakra.debug.address
 import net.obsidianx.chakra.debug.dump
 import net.obsidianx.chakra.layout.FlexLayoutState
+import net.obsidianx.chakra.layout.asFloatOrZero
 import net.obsidianx.chakra.layout.deepDirty
 import net.obsidianx.chakra.layout.getChildOrNull
 import net.obsidianx.chakra.layout.getConstraints
+import net.obsidianx.chakra.layout.isSet
 import net.obsidianx.chakra.layout.measureNode
 import net.obsidianx.chakra.layout.removeAllChildren
 import net.obsidianx.chakra.modifiers.flexboxParentData
@@ -141,6 +145,15 @@ fun Flexbox(
                                 }
                                 childNodeData.placeable = childPlaceable
                                 data = childNodeData
+                                if (childNodeData.fitMinContent) {
+                                    // save the previously measured minimum size if we have one
+                                    childNodeData.style.minWidth = layoutWidth.takeIf { it > 0 }
+                                        ?.let { YogaValue(it, YogaUnit.POINT) }
+                                        ?: childNodeData.style.minWidth
+                                    childNodeData.style.minHeight = layoutHeight.takeIf { it > 0 }
+                                        ?.let { YogaValue(it, YogaUnit.POINT) }
+                                        ?: childNodeData.style.minHeight
+                                }
                                 childNodeData.style.apply(this)
                             }
                         }
@@ -158,133 +171,144 @@ fun Flexbox(
                     ?: yogaConstraints[0]
                 val height = minContentHeight.takeIf { containerNodeData.fitMinContent }?.toFloat()
                     ?: yogaConstraints[1]
+                if (containerNodeData.fitMinContent) {
+                    containerNode.setMinWidth(width)
+                    containerNode.setMinHeight(height)
+                }
                 containerNode.calculateLayout(width, height)
+            }
+
+            if (!remeasurePass) {
+                return@SubcomposeLayout layout(
+                    containerNode.layoutWidth.toInt(),
+                    containerNode.layoutHeight.toInt()
+                ) {}
             }
         }
 
-        if (remeasurePass) {
-            // Determine the measured dimensions
-            val measuredWidth =
-                containerNode.layoutWidth.roundToInt().takeIf { it != Constraints.Infinity }
-                    ?: constraints.maxWidth
-            val measuredHeight =
-                containerNode.layoutHeight.roundToInt().takeIf { it != Constraints.Infinity }
-                    ?: constraints.maxHeight
+
+        // Determine the measured dimensions
+        val measuredWidth =
+            containerNode.layoutWidth.roundToInt().takeIf { it != Constraints.Infinity }
+                ?: constraints.maxWidth
+        val measuredHeight =
+            containerNode.layoutHeight.roundToInt().takeIf { it != Constraints.Infinity }
+                ?: constraints.maxHeight
+        val minWidth = containerNode.minWidth.asFloatOrZero.takeIf { it > 0 } ?: measuredWidth
+        val minHeight =
+            containerNode.minHeight.asFloatOrZero.takeIf { it > 0 } ?: measuredHeight
 
 
-            containerNode.apply {
-                (data as? FlexNodeData)?.style?.apply(this)
-                setMinWidth(measuredWidth.toFloat())
-                setMinHeight(measuredHeight.toFloat())
-                setMaxWidth(measuredWidth.toFloat())
-                setMaxHeight(measuredHeight.toFloat())
-                getConstraints(
-                    from = constraints,
-                    parentNode = parentLayoutState?.parent
-                ).let { yogaConstraints ->
-                    calculateLayout(yogaConstraints[0], yogaConstraints[1])
-                }
+        containerNode.apply {
+            (data as? FlexNodeData)?.style?.apply(this)
+            setMinWidth(minWidth.toFloat())
+            setMinHeight(minHeight.toFloat())
+            setMaxWidth(measuredWidth.toFloat())
+            setMaxHeight(measuredHeight.toFloat())
+            getConstraints(
+                from = constraints,
+                parentNode = parentLayoutState?.parent
+            ).let { yogaConstraints ->
+                calculateLayout(yogaConstraints[0], yogaConstraints[1])
             }
+        }
 
-            myLayoutState.remeasure = true
+        myLayoutState.remeasure = true
 
-            // Reset flex layout to re-layout with calculated constraints
-            containerNode.apply {
-                deepDirty()
-                calculateLayout(measuredWidth.toFloat(), measuredHeight.toFloat())
-            }
+        // Reset flex layout to re-layout with calculated constraints
+        containerNode.apply {
+            deepDirty()
+            calculateLayout(measuredWidth.toFloat(), measuredHeight.toFloat())
+        }
 
-            // Assign dimensions calculated in flex to views
-            val childViews = subcompose(
-                "remeasure",
-                content.withProviders(
-                    scope,
-                    containerNodeData.debugDumpFlags ?: treeDebugFlags
-                )
+        // Assign dimensions calculated in flex to views
+        val childViews = subcompose(
+            "remeasure",
+            content.withProviders(
+                scope,
+                containerNodeData.debugDumpFlags ?: treeDebugFlags
             )
-            val measuredChildren = childViews.mapIndexed { index, child ->
+        )
+        val measuredChildren = childViews.mapIndexed { index, child ->
+            if (containerNode.childCount <= index) {
+                return@mapIndexed child.measure(Constraints())
+            }
+            myLayoutState.childIndex = index
+            val childNode = containerNode.getChildAt(index)
+            val isContainer = childNode.childCount > 0
+
+            val paddingStart = ceil(childNode.getLayoutPadding(YogaEdge.START))
+            val paddingTop = ceil(childNode.getLayoutPadding(YogaEdge.TOP))
+            val paddingEnd = ceil(childNode.getLayoutPadding(YogaEdge.END))
+            val paddingBottom = ceil(childNode.getLayoutPadding(YogaEdge.BOTTOM))
+
+            val verticalPadding =
+                (paddingTop + paddingBottom).takeIf { !isContainer } ?: 0f
+            val horizontalPadding =
+                (paddingStart + paddingEnd).takeIf { !isContainer } ?: 0f
+
+            val childWidth =
+                (childNode.layoutWidth - horizontalPadding)
+                    .roundToInt()
+                    .coerceAtLeast(0)
+            val childHeight =
+                (childNode.layoutHeight - verticalPadding)
+                    .roundToInt()
+                    .coerceAtLeast(0)
+
+            val childConstraints = Constraints(
+                minWidth = childWidth,
+                minHeight = childHeight,
+                maxWidth = childWidth,
+                maxHeight = childHeight
+            )
+
+            child.measure(childConstraints)
+        }
+
+        containerNode.calculateLayout(measuredWidth.toFloat(), measuredHeight.toFloat())
+
+        // Place child views in layout
+        return@SubcomposeLayout layout(
+            measuredWidth,
+            measuredHeight
+        ) {
+            measuredChildren.fastForEachIndexed { index, childPlaceable ->
                 if (containerNode.childCount <= index) {
-                    return@mapIndexed child.measure(Constraints())
+                    return@fastForEachIndexed
                 }
-                myLayoutState.childIndex = index
                 val childNode = containerNode.getChildAt(index)
                 val isContainer = childNode.childCount > 0
 
-                val paddingStart = ceil(childNode.getLayoutPadding(YogaEdge.START))
-                val paddingTop = ceil(childNode.getLayoutPadding(YogaEdge.TOP))
-                val paddingEnd = ceil(childNode.getLayoutPadding(YogaEdge.END))
-                val paddingBottom = ceil(childNode.getLayoutPadding(YogaEdge.BOTTOM))
+                // Padding was removed in the measuring phase, so offset the view by the padding
+                // amount to ensure the content is in the right place
+                val paddingStart =
+                    childNode.getLayoutPadding(YogaEdge.START).takeIf { !isContainer } ?: 0f
+                val paddingTop =
+                    childNode.getLayoutPadding(YogaEdge.TOP).takeIf { !isContainer } ?: 0f
 
-                val verticalPadding =
-                    (paddingTop + paddingBottom).takeIf { !isContainer } ?: 0f
-                val horizontalPadding =
-                    (paddingStart + paddingEnd).takeIf { !isContainer } ?: 0f
+                val nodeX = (childNode.layoutX + paddingStart).roundToInt()
+                val nodeY = (childNode.layoutY + paddingTop).roundToInt()
 
-                val childWidth =
-                    (childNode.layoutWidth - horizontalPadding)
-                        .roundToInt()
-                        .coerceAtLeast(0)
-                val childHeight =
-                    (childNode.layoutHeight - verticalPadding)
-                        .roundToInt()
-                        .coerceAtLeast(0)
-
-                val childConstraints = Constraints(
-                    minWidth = childWidth,
-                    minHeight = childHeight,
-                    maxWidth = childWidth,
-                    maxHeight = childHeight
-                )
-
-                child.measure(childConstraints)
+                childPlaceable.place(nodeX, nodeY)
             }
+        }.also {
+            myLayoutState.remeasure = false
+            myLayoutState.layoutComplete = true
 
-            containerNode.calculateLayout(measuredWidth.toFloat(), measuredHeight.toFloat())
-
-            // Place child views in layout
-            return@SubcomposeLayout layout(
-                measuredWidth,
-                measuredHeight
-            ) {
-                measuredChildren.fastForEachIndexed { index, childPlaceable ->
-                    if (containerNode.childCount <= index) {
-                        return@fastForEachIndexed
-                    }
-                    val childNode = containerNode.getChildAt(index)
-                    val isContainer = childNode.childCount > 0
-
-                    // Padding was removed in the measuring phase, so offset the view by the padding
-                    // amount to ensure the content is in the right place
-                    val paddingStart =
-                        childNode.getLayoutPadding(YogaEdge.START).takeIf { !isContainer } ?: 0f
-                    val paddingTop =
-                        childNode.getLayoutPadding(YogaEdge.TOP).takeIf { !isContainer } ?: 0f
-
-                    val nodeX = (childNode.layoutX + paddingStart).roundToInt()
-                    val nodeY = (childNode.layoutY + paddingTop).roundToInt()
-
-                    childPlaceable.place(nodeX, nodeY)
-                }
-            }.also {
-                myLayoutState.remeasure = false
-                myLayoutState.layoutComplete = true
-
-                // Only dump the layout if we're the top-most node with flexDebugDump()
-                val debugFlags = containerNodeData.debugDumpFlags ?: treeDebugFlags
-                if ((treeDebugFlags == null || parentLayoutState?.layoutComplete == true) && debugFlags != null) {
-                    debugFlags.let { flags ->
-                        containerNode.dump(flags = flags).split("\n")
-                            .fastForEach {
-                                Log.d(
-                                    containerNodeData.debugLogTag ?: DEFAULT_LOG_TAG,
-                                    it
-                                )
-                            }
-                    }
+            // Only dump the layout if we're the top-most node with flexDebugDump()
+            val debugFlags = containerNodeData.debugDumpFlags ?: treeDebugFlags
+            if ((treeDebugFlags == null || parentLayoutState?.layoutComplete == true) && debugFlags != null) {
+                debugFlags.let { flags ->
+                    containerNode.dump(flags = flags).split("\n")
+                        .fastForEach {
+                            Log.d(
+                                containerNodeData.debugLogTag ?: DEFAULT_LOG_TAG,
+                                it
+                            )
+                        }
                 }
             }
         }
-
-        layout(0, 0) {}
     }
 }
