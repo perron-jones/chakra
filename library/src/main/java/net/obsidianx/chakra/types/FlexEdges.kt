@@ -3,6 +3,7 @@ package net.obsidianx.chakra.types
 import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaUnit
 import com.facebook.yoga.YogaValue
+import net.obsidianx.chakra.layout.isSet
 
 data class FlexEdges(
     val left: YogaValue = YOGA_UNDEFINED,
@@ -44,5 +45,19 @@ data class FlexEdges(
                 else -> fallback(edge.key)
             }
         }
+    }
+
+    fun getHorizontal(): Float {
+        val horiz = horizontal.takeIf { it.isSet }?.value ?: all.takeIf { it.isSet }?.value ?: 0f
+        val startEdge = start.takeIf { it.isSet }?.value ?: horiz
+        val endEdge = end.takeIf { it.isSet }?.value ?: horiz
+        return startEdge + endEdge
+    }
+
+    fun getVertical(): Float {
+        val vert = vertical.takeIf { it.isSet }?.value ?: all.takeIf { it.isSet }?.value ?: 0f
+        val topEdge = top.takeIf { it.isSet }?.value ?: vert
+        val bottomEdge = bottom.takeIf { it.isSet }?.value ?: vert
+        return topEdge + bottomEdge
     }
 }

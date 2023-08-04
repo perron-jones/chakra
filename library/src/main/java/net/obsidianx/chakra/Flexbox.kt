@@ -167,10 +167,17 @@ fun Flexbox(
                 from = constraints,
                 parentNode = parentLayoutState?.parent,
             ).let { yogaConstraints ->
-                val width = minContentWidth.takeIf { containerNodeData.fitMinContent }?.toFloat()
-                    ?: yogaConstraints[0]
-                val height = minContentHeight.takeIf { containerNodeData.fitMinContent }?.toFloat()
-                    ?: yogaConstraints[1]
+                val width = if (containerNodeData.fitMinContent) {
+                    minContentWidth + containerNodeData.style.padding.getHorizontal()
+                } else {
+                    yogaConstraints[0]
+                }
+                val height = if(containerNodeData.fitMinContent) {
+                    minContentHeight + containerNodeData.style.padding.getVertical()
+                } else {
+                    yogaConstraints[1]
+                }
+
                 if (containerNodeData.fitMinContent) {
                     containerNode.setMinWidth(width)
                     containerNode.setMinHeight(height)
