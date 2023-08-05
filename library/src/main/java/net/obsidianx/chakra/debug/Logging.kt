@@ -1,8 +1,11 @@
 package net.obsidianx.chakra.debug
 
 import com.facebook.yoga.YogaEdge
+import com.facebook.yoga.YogaFlexDirection
+import com.facebook.yoga.YogaGutter
 import com.facebook.yoga.YogaNode
 import com.facebook.yoga.YogaValue
+import com.facebook.yoga.YogaWrap
 import net.obsidianx.chakra.layout.isSet
 import net.obsidianx.chakra.types.FlexNodeData
 
@@ -67,9 +70,20 @@ internal fun YogaNode.dump(flags: Set<DebugDumpFlag> = DebugDumpFlag.ALL, depth:
         |$indent  Align self: $alignSelf
     """.trimMargin()
 
+    val gapAll = getGap(YogaGutter.ALL)
+    val gapColumn = getGap(YogaGutter.COLUMN).takeIf { !it.isNaN() } ?: gapAll
+    val gapRow = getGap(YogaGutter.ROW).takeIf { !it.isNaN() } ?: gapAll
+    val gapBoth = "col: $gapColumn; row: $gapRow"
+    val gap = when (flexDirection) {
+        YogaFlexDirection.ROW -> if (wrap != YogaWrap.NO_WRAP) gapBoth else gapRow
+        YogaFlexDirection.COLUMN -> if (wrap != YogaWrap.NO_WRAP) gapBoth else gapColumn
+        else -> 0f
+    }
+
     val flexContainerConfig = """
         |$indent  Flex direction: $flexDirection
         |$indent  Flex wrap: $wrap
+        |$indent  Flex gap: $gap
     """.trimMargin()
 
     val flexNodeConfig = """

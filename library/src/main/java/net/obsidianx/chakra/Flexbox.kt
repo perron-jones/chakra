@@ -24,7 +24,6 @@ import net.obsidianx.chakra.layout.asFloatOrZero
 import net.obsidianx.chakra.layout.deepDirty
 import net.obsidianx.chakra.layout.getChildOrNull
 import net.obsidianx.chakra.layout.getConstraints
-import net.obsidianx.chakra.layout.isSet
 import net.obsidianx.chakra.layout.measureNode
 import net.obsidianx.chakra.layout.removeAllChildren
 import net.obsidianx.chakra.modifiers.flexboxParentData
@@ -172,15 +171,15 @@ fun Flexbox(
                 } else {
                     yogaConstraints[0]
                 }
-                val height = if(containerNodeData.fitMinContent) {
+                val height = if (containerNodeData.fitMinContent) {
                     minContentHeight + containerNodeData.style.padding.getVertical()
                 } else {
                     yogaConstraints[1]
                 }
 
                 if (containerNodeData.fitMinContent) {
-                    containerNode.setMinWidth(width)
-                    containerNode.setMinHeight(height)
+                    containerNode.setMinWidth(max(containerNode.minWidth.asFloatOrZero, width))
+                    containerNode.setMinHeight(max(containerNode.minHeight.asFloatOrZero, height))
                 }
                 containerNode.calculateLayout(width, height)
             }
@@ -201,15 +200,14 @@ fun Flexbox(
         val measuredHeight =
             containerNode.layoutHeight.roundToInt().takeIf { it != Constraints.Infinity }
                 ?: constraints.maxHeight
-        val minWidth = containerNode.minWidth.asFloatOrZero.takeIf { it > 0 } ?: measuredWidth
-        val minHeight =
-            containerNode.minHeight.asFloatOrZero.takeIf { it > 0 } ?: measuredHeight
+        val minWidth = max(containerNode.minWidth.asFloatOrZero, measuredWidth.toFloat())
+        val minHeight = max(containerNode.minHeight.asFloatOrZero, measuredHeight.toFloat())
 
 
         containerNode.apply {
             (data as? FlexNodeData)?.style?.apply(this)
-            setMinWidth(minWidth.toFloat())
-            setMinHeight(minHeight.toFloat())
+            setMinWidth(minWidth)
+            setMinHeight(minHeight)
             setMaxWidth(measuredWidth.toFloat())
             setMaxHeight(measuredHeight.toFloat())
             getConstraints(
