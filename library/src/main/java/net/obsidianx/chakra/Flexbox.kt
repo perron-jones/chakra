@@ -1,9 +1,13 @@
 package net.obsidianx.chakra
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalContext
@@ -55,19 +59,20 @@ fun FlexboxScope.Flexbox(
     )
 }
 
+@SuppressLint("RememberReturnType")
 @Composable
 fun Flexbox(
     modifier: Modifier = Modifier,
     parentLayoutState: FlexLayoutState? = null,
     content: @Composable FlexboxScope.() -> Unit
 ) {
-    val context = LocalContext.current
-    val treeDebugFlags = LocalDebugDumpFlags.current
+    val context by rememberUpdatedState(LocalContext.current)
+    remember { SoLoader.init(context, false) }
+
+    val treeDebugFlags by rememberUpdatedState(LocalDebugDumpFlags.current)
     // Passed down to child views when doing subcompose passes
     val myLayoutState = FlexLayoutState()
     val mod = modifier.flexboxParentData()
-    SoLoader.init(context, false)
-
     val scope = FlexboxScope(myLayoutState)
 
     // Test opposites to ensure both are true on a root node
