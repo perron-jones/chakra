@@ -151,12 +151,12 @@ fun Flexbox(
                                 data = childNodeData
                                 if (childNodeData.fitMinContent) {
                                     // save the previously measured minimum size if we have one
-                                    childNodeData.style.minWidth = layoutWidth.takeIf { it > 0 }
+                                    childNodeData.style.width = layoutWidth.takeIf { it > 0 }
                                         ?.let { YogaValue(it, YogaUnit.POINT) }
-                                        ?: childNodeData.style.minWidth
-                                    childNodeData.style.minHeight = layoutHeight.takeIf { it > 0 }
+                                        ?: childNodeData.style.width
+                                    childNodeData.style.height = layoutHeight.takeIf { it > 0 }
                                         ?.let { YogaValue(it, YogaUnit.POINT) }
-                                        ?: childNodeData.style.minHeight
+                                        ?: childNodeData.style.height
                                 }
                                 childNodeData.style.apply(this)
                             }
@@ -183,8 +183,8 @@ fun Flexbox(
                 }
 
                 if (containerNodeData.fitMinContent) {
-                    containerNode.setMinWidth(max(containerNode.minWidth.asFloatOrZero, width))
-                    containerNode.setMinHeight(max(containerNode.minHeight.asFloatOrZero, height))
+                    containerNode.setWidth(max(containerNode.width.asFloatOrZero, width))
+                    containerNode.setHeight(max(containerNode.height.asFloatOrZero, height))
                 }
                 containerNode.calculateLayout(width, height)
             }
