@@ -1,6 +1,6 @@
 package net.obsidianx.chakra
 
-import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.modifier.modifierLocalOf
 import net.obsidianx.chakra.debug.DebugDumpFlag
 
-internal val LocalDebugDumpFlags = compositionLocalOf<Set<DebugDumpFlag>?> { null }
+internal val ModifierLocalDebugDumpFlags = modifierLocalOf<Set<DebugDumpFlag>?> { null }

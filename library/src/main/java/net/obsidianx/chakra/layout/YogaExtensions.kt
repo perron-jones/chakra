@@ -2,6 +2,7 @@ package net.obsidianx.chakra.layout
 
 import androidx.compose.ui.unit.Constraints
 import com.facebook.yoga.YogaConstants
+import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaFlexDirection
 import com.facebook.yoga.YogaNode
 import com.facebook.yoga.YogaUnit
@@ -12,6 +13,9 @@ internal val YogaValue.isSet
 
 internal val YogaValue.asFloatOrZero: Float
     get() = value.takeIf { isSet } ?: 0f
+
+internal val YogaValue.asFloatOrNan: Float
+    get() = value.takeIf { isSet } ?: Float.NaN
 
 internal val YogaFlexDirection.isRow
     get() = this == YogaFlexDirection.ROW || this == YogaFlexDirection.ROW_REVERSE

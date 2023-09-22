@@ -3,6 +3,7 @@ package net.obsidianx.chakra
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
@@ -10,12 +11,26 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import net.obsidianx.chakra.debug.debugTag
+import net.obsidianx.chakra.modifiers.alignItems
+import net.obsidianx.chakra.modifiers.direction
+import net.obsidianx.chakra.modifiers.fitMinContent
+import net.obsidianx.chakra.modifiers.flex
+import net.obsidianx.chakra.modifiers.height
+import net.obsidianx.chakra.modifiers.justifyContent
+import net.obsidianx.chakra.modifiers.padding
+import net.obsidianx.chakra.modifiers.width
+import net.obsidianx.chakra.types.FlexAlign
+import net.obsidianx.chakra.types.FlexDirection
+import net.obsidianx.chakra.types.FlexJustify
 
 enum class Page {
     Home,
@@ -26,6 +41,19 @@ enum class Page {
     Shrink,
     DisconnectedLayout,
     DepthLayout,
+    SwapContent,
+    UpdateContents,
+}
+
+@Composable
+fun Test(modifier: Modifier = Modifier) {
+    Flexbox(modifier = modifier
+        .flex {
+            debugTag("in")
+            padding(4.dp)
+        }
+        .border(1.dp, Color.Red)) {
+    }
 }
 
 class MainActivity : ComponentActivity() {
@@ -63,6 +91,8 @@ class MainActivity : ComponentActivity() {
                             Page.Shrink -> Shrink()
                             Page.DisconnectedLayout -> DisconnectedLayout()
                             Page.DepthLayout -> DepthLayout()
+                            Page.SwapContent -> SwapContent()
+                            Page.UpdateContents -> UpdateContents()
                         }
                     }
                 }

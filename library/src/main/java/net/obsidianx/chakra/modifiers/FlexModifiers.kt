@@ -1,45 +1,45 @@
 package net.obsidianx.chakra.modifiers
 
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.facebook.yoga.YogaUnit
 import com.facebook.yoga.YogaValue
 import com.facebook.yoga.YogaWrap
+import net.obsidianx.chakra.FlexboxStyleScope
 import net.obsidianx.chakra.types.FlexDirection
 import net.obsidianx.chakra.types.FlexGap
 import net.obsidianx.chakra.types.FlexGutter
 import net.obsidianx.chakra.types.FlexUnit
 
-fun Modifier.flexDirection(direction: FlexDirection) = flexboxParentData {
-    style.flexDirection = direction.yogaValue
+fun FlexboxStyleScope.direction(direction: FlexDirection) {
+    nodeData.style.flexDirection = direction.yogaValue
 }
 
-fun Modifier.flex(value: Float) = flexboxParentData {
-    style.flex = value
+fun FlexboxStyleScope.flex(value: Float) {
+    nodeData.style.flex = value
 }
 
-fun Modifier.flexGrow(value: Float) = flexboxParentData {
-    style.flexGrow = value
+fun FlexboxStyleScope.grow(value: Float) {
+    nodeData.style.flexGrow = value
 }
 
-fun Modifier.flexShrink(value: Float) = flexboxParentData {
-    style.flexShrink = value
+fun FlexboxStyleScope.shrink(value: Float) {
+    nodeData.style.flexShrink = value
 }
 
-fun Modifier.flexBasis(dp: Dp) = flexboxParentData {
-    style.flexBasis = YogaValue(dp.value, YogaUnit.POINT)
+fun FlexboxStyleScope.basis(dp: Dp) {
+    nodeData.style.flexBasis = YogaValue(dp.value, YogaUnit.POINT)
 }
 
-fun Modifier.flexBasis(percent: Float) = flexboxParentData {
-    style.flexBasis = YogaValue(percent, YogaUnit.PERCENT)
+fun FlexboxStyleScope.basis(percent: Float) {
+    nodeData.style.flexBasis = YogaValue(percent, YogaUnit.PERCENT)
 }
 
-fun Modifier.flexBasis(type: FlexUnit) = flexboxParentData {
-    style.flexBasis = YogaValue(Float.NaN, type.yogaValue)
+fun FlexboxStyleScope.basis(type: FlexUnit) {
+    nodeData.style.flexBasis = YogaValue(Float.NaN, type.yogaValue)
 }
 
-fun Modifier.flexWrap(wrap: Boolean, reverse: Boolean = false) = flexboxParentData {
-    style.flexWrap = if (wrap) {
+fun FlexboxStyleScope.wrap(wrap: Boolean, reverse: Boolean = false) {
+    nodeData.style.flexWrap = if (wrap) {
         if (reverse) {
             YogaWrap.WRAP_REVERSE
         } else {
@@ -50,16 +50,14 @@ fun Modifier.flexWrap(wrap: Boolean, reverse: Boolean = false) = flexboxParentDa
     }
 }
 
-fun Modifier.flexGap(all: Dp? = null, horizontal: Dp? = null, vertical: Dp? = null): Modifier {
+fun FlexboxStyleScope.gap(all: Dp? = null, horizontal: Dp? = null, vertical: Dp? = null) {
     if (listOf(all, horizontal, vertical).count { it != null } > 1) {
-        throw IllegalArgumentException("Only set one kind of gap in Modifier.flexGap")
+        throw IllegalArgumentException("Only set one kind of gap in FlexboxStyleScope.gap")
     }
-    return flexboxParentData { density ->
-        val gutter = when {
-            vertical != null -> FlexGutter.Row
-            horizontal != null -> FlexGutter.Column
-            else -> FlexGutter.All
-        }
-        style.gap = FlexGap(gutter, (all?.value ?: 0f) * density.density)
+    val gutter = when {
+        vertical != null -> FlexGutter.Row
+        horizontal != null -> FlexGutter.Column
+        else -> FlexGutter.All
     }
+    nodeData.style.gap = FlexGap(gutter, (all?.value ?: 0f) * density.density)
 }

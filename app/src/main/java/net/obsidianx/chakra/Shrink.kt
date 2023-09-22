@@ -9,22 +9,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import net.obsidianx.chakra.debug.DebugDumpFlag
-import net.obsidianx.chakra.debug.flexDebugDump
-import net.obsidianx.chakra.debug.flexDebugTag
-import net.obsidianx.chakra.modifiers.flexDirection
-import net.obsidianx.chakra.modifiers.flexHeight
-import net.obsidianx.chakra.modifiers.flexShrink
-import net.obsidianx.chakra.modifiers.flexWidth
+import net.obsidianx.chakra.debug.debugDump
+import net.obsidianx.chakra.debug.debugTag
+import net.obsidianx.chakra.modifiers.direction
+import net.obsidianx.chakra.modifiers.flex
+import net.obsidianx.chakra.modifiers.height
+import net.obsidianx.chakra.modifiers.shrink
+import net.obsidianx.chakra.modifiers.width
 import net.obsidianx.chakra.types.FlexDirection
 
 @Composable
 fun FlexboxScope.GreenBox(content: @Composable FlexboxScope.() -> Unit) {
     Flexbox(
         modifier = Modifier
-            .flexWidth(100.dp)
-            .flexHeight(100.dp)
-            .flexDirection(FlexDirection.Row)
-            .flexDebugTag("GreenBox")
+            .flex {
+                width(100.dp)
+                height(100.dp)
+                direction(FlexDirection.Row)
+                debugTag("GreenBox")
+                debugDump()
+            }
             .background(Color.Green)
     ) {
         content()
@@ -35,11 +39,13 @@ fun FlexboxScope.GreenBox(content: @Composable FlexboxScope.() -> Unit) {
 fun FlexboxScope.BlueBox(content: (@Composable FlexboxScope.() -> Unit)? = null) {
     Flexbox(
         modifier = Modifier
-            .flexWidth(40.dp)
-            .flexHeight(90.dp)
-            .flexDirection(FlexDirection.Row)
-            .flexShrink(1f)
-            .flexDebugTag("BlueBox")
+            .flex {
+                width(40.dp)
+                height(90.dp)
+                direction(FlexDirection.Row)
+                shrink(1f)
+                debugTag("BlueBox")
+            }
             .background(Color.Blue)
             .border(width = 1.dp, color = Color.Yellow)
     ) {
@@ -51,11 +57,13 @@ fun FlexboxScope.BlueBox(content: (@Composable FlexboxScope.() -> Unit)? = null)
 fun FlexboxScope.MagentaBox(content: @Composable FlexboxScope.() -> Unit = {}) {
     Flexbox(
         modifier = Modifier
-            .flexWidth(20.dp)
-            .flexHeight(80.dp)
-            .flexDirection(FlexDirection.Row)
-            .flexShrink(1f)
-            .flexDebugTag("MagentaBox")
+            .flex {
+                width(20.dp)
+                height(80.dp)
+                direction(FlexDirection.Row)
+                shrink(1f)
+                debugTag("MagentaBox")
+            }
             .background(Color.Magenta)
             .border(width = 1.dp, color = Color.Gray)
     ) { content() }
@@ -65,9 +73,10 @@ fun FlexboxScope.MagentaBox(content: @Composable FlexboxScope.() -> Unit = {}) {
 fun Shrink() {
     Row {
         Flexbox(
-            Modifier
-                .flexDirection(FlexDirection.Column)
-                .flexDebugDump(flags = DebugDumpFlag.ALL_SET)
+            Modifier.flex {
+                direction(FlexDirection.Column)
+                debugDump(flags = DebugDumpFlag.ALL_SET)
+            }
         ) {
             repeat(4) { green ->
                 GreenBox {
