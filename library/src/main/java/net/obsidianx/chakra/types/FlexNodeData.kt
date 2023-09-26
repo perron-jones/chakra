@@ -10,7 +10,8 @@ data class FlexNodeData(
     var debugDumpFlags: Set<DebugDumpFlag>? = null,
     var debugLogTag: String? = null,
     var layoutNode: YogaNode? = null,
-    var placeable: Placeable? = null,
     var fitMinContent: Boolean = false,
     var isContainer: Boolean = false,
+    var minWidth: Int = 0,
+    var minHeight: Int = 0,
 )

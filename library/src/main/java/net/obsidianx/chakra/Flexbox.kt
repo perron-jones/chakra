@@ -8,15 +8,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.MultiMeasureLayout
-import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
-import androidx.compose.ui.util.fastMap
 import com.facebook.soloader.SoLoader
 import com.facebook.yoga.YogaEdge
+import com.facebook.yoga.YogaNode
 import com.facebook.yoga.YogaNodeFactory
 import com.facebook.yoga.YogaUnit
 import com.facebook.yoga.YogaValue
@@ -25,10 +24,12 @@ import net.obsidianx.chakra.debug.address
 import net.obsidianx.chakra.debug.dump
 import net.obsidianx.chakra.layout.FlexLayoutState
 import net.obsidianx.chakra.layout.asFloatOrZero
-import net.obsidianx.chakra.layout.deepDirty
 import net.obsidianx.chakra.layout.getConstraints
+import net.obsidianx.chakra.layout.horizontalPadding
 import net.obsidianx.chakra.layout.measureNode
 import net.obsidianx.chakra.layout.removeAllChildren
+import net.obsidianx.chakra.layout.verticalPadding
+import net.obsidianx.chakra.modifiers.flexContainer
 import net.obsidianx.chakra.types.FlexNodeData
 import kotlin.math.ceil
 import kotlin.math.max
@@ -55,6 +56,7 @@ fun Flexbox(
     val context by rememberUpdatedState(LocalContext.current)
     remember { SoLoader.init(context, false) }
 
+
     val layoutState = remember { FlexLayoutState() }
     val scope = FlexboxScope(layoutState)
 
@@ -62,211 +64,231 @@ fun Flexbox(
     var layoutFlexData: FlexNodeData? = null
 
     val log: (String) -> Unit = { msg ->
-        // Log.d("XXX", "[${layoutNode.address}]$msg")
+        if (Chakra.debugLogging) {
+            Log.d("Chakra", "[${layoutNode.address}]$msg")
+        }
     }
 
-    MultiMeasureLayout(
-        modifier = modifier.layout { measurable, constraints ->
-            // extract rules from own modifier
-            if (layoutFlexData == null) {
-                layoutFlexData = (measurable.parentData as? FlexNodeData)?.also {
-                    layoutState.originalStyle = it.style.copy()
-                }
-            }
-            if (layoutNode == null) {
-                layoutState.selfNode = (layoutFlexData?.layoutNode ?: parentLayoutState?.childNode
-                ?: YogaNodeFactory.create())
-                layoutNode = layoutState.selfNode
-            }
-            if (layoutFlexData == null) {
-                layoutFlexData = (layoutNode?.data as? FlexNodeData ?: FlexNodeData()).also {
-                    it.style = layoutState.originalStyle.copy()
-                }
-            }
-            layoutFlexData?.isContainer = true
-            layoutFlexData?.style?.let { origStyle ->
-                layoutState.originalStyle = origStyle.copy()
-            }
-            log("[Layout] Measure")
-            val placeable = measurable.measure(constraints)
-            layout(placeable.measuredWidth, placeable.measuredHeight) {
-                log("[Layout] Place [${layoutNode?.layoutWidth}, ${layoutNode?.layoutHeight}]@(${layoutNode?.layoutX}, ${layoutNode?.layoutY})")
-                placeable.placeRelative(0, 0)
-            }
-        },
-        content = {
-            log("[Content]")
-            content(scope)
+    val makeNode = {
+        YogaNodeFactory.create().also {
+            log("[Layout] Creating a new node: [${it.address}]")
         }
-    ) { measurables, constraints ->
-        val node = layoutNode ?: return@MultiMeasureLayout layout(0, 0) {}
+    }
+    val makeChildNode: (Int) -> YogaNode = { index ->
+        layoutNode?.let {
+            if (index < it.childCount) it.getChildAt(index).also { childNode ->
+                log("[Layout] Reusing child node: [${childNode.address}]")
+            } else null
+        } ?: makeNode()
+    }
 
+    // Multimeasure allows the layout to build the Yoga node tree recursively
+    @Suppress("DEPRECATION")
+    MultiMeasureLayout(
+        modifier = modifier
+            .flexContainer()
+            .layout { measurable, constraints ->
+                // extract rules from own modifier
+                if (layoutFlexData == null) {
+                    layoutFlexData = (measurable.parentData as? FlexNodeData)?.also {
+                        layoutState.originalStyle = it.style.copy()
+                    }
+                }
+                if (layoutNode == null) {
+                    layoutState.selfNode = (layoutFlexData?.layoutNode?.also {
+                        log("[Layout] Reusing container node: [${it.address}]")
+                    } ?: parentLayoutState?.childNode?.also {
+                        log("[Layout] Using node from parent: [${it.address}]")
+                    } ?: makeNode())
+                    layoutNode = layoutState.selfNode
+                }
+                if (layoutFlexData == null) {
+                    layoutFlexData = (layoutNode?.data as? FlexNodeData ?: FlexNodeData()).also {
+                        it.style = layoutState.originalStyle.copy()
+                    }
+                }
+                layoutFlexData?.isContainer = true
+                layoutFlexData?.style?.let { origStyle ->
+                    layoutState.originalStyle = origStyle.copy()
+                }
+                log("[Layout] Measure")
+                val placeable = measurable.measure(constraints)
+                layout(placeable.measuredWidth, placeable.measuredHeight) {
+                    log("[Layout] Place [${layoutNode?.layoutWidth}, ${layoutNode?.layoutHeight}]@(${layoutNode?.layoutX}, ${layoutNode?.layoutY})")
+                    placeable.placeRelative(0, 0)
+                }
+            },
+        content = {
+            log("[Content] Parent layout state: ${parentLayoutState.address}")
+            content(scope)
+            layoutNode?.removeAllChildren()
+        }
+    ) layout@{ measurables, constraints ->
+        val node = layoutNode ?: return@layout layout(0, 0) {}
+
+        val changeRoot = parentLayoutState?.layoutComplete != false
         val intrinsicPass = parentLayoutState?.remeasure != true || parentLayoutState.layoutComplete
         val remeasurePass =
             parentLayoutState?.remeasure != false || parentLayoutState.layoutComplete
 
-        log("[Measure] Root: ${parentLayoutState == null}; Intrinsic: $intrinsicPass; Remeasure: $remeasurePass")
+        log("[Measure] Root: ${parentLayoutState == null}; Intrinsic: $intrinsicPass; Remeasure: $remeasurePass; Change root: $changeRoot")
 
-        lateinit var placeables: List<Placeable>
         if (intrinsicPass) {
             log("[Intrinsic] Start (child nodes: ${measurables.size}) ($constraints)")
             layoutState.layoutComplete = false
-            node.removeAllChildren()
-
             layoutState.originalStyle.apply(node)
 
-            var minContentWidth = 0
-            var minContentHeight = 0
+            val horizontalPadding = node.horizontalPadding().toInt()
+            val verticalPadding = node.verticalPadding().toInt()
 
-            placeables = measurables.fastMap { childMeasurable ->
+            var minContentWidth = horizontalPadding
+            var minContentHeight = verticalPadding
+
+            log("[Intrinsic] Container padding: ($horizontalPadding, $verticalPadding)")
+
+            measurables.mapIndexed { index, childMeasurable ->
                 // get or add a flexbox node
-                val childNodeData = childMeasurable.parentData as? FlexNodeData
+                var childNodeData = (childMeasurable.parentData as? FlexNodeData)?.also {
+                    log("[Intrinsic] Found flex node data on child [${childMeasurable.parentData.address}]")
+                }
                 val childNode =
-                    childNodeData?.layoutNode ?: YogaNodeFactory.create().also { newNode ->
-                        childNodeData?.let { it.layoutNode = newNode }
+                    childNodeData?.layoutNode ?: makeChildNode(index).also { newNode ->
+                        childNodeData?.let {
+                            it.layoutNode = newNode
+                            newNode.data = it
+                        }
                     }
                 layoutState.childNode = childNode
-                childNode.data = childNodeData
 
-                childNodeData?.style?.apply(childNode)
-
-                log("[Intrinsic] Node: [${childNode.address}]; Data: [${childNodeData.address}]; width: ${childNode.width}; height: ${childNode.height}")
-
-                // measure intrinsic size
-                childMeasurable.measure(Constraints()).also { childPlaceable ->
-                    // assign empty node data if not present from parentData
-                    if (childNode.data == null) {
-                        childNode.data = FlexNodeData().apply {
-                            style.apply(childNode)
-                        }
-                    }
-
-                    // assign placeable for measure function
-                    (childNode.data as FlexNodeData).placeable = childPlaceable
-
-                    // add to parent
-                    log("[Intrinsic] Add [${node.childCount}][${childNode.address}], size: (${childPlaceable.measuredWidth}, ${childPlaceable.measuredHeight})")
-                    node.addChildAt(childNode, node.childCount)
-
-                    // configure node
-                    if (childNodeData?.isContainer != true) {
-                        childNode.setMeasureFunction(::measureNode)
-                    }
-
-                    minContentWidth = max(childPlaceable.measuredWidth, minContentWidth)
-                    minContentHeight = max(childPlaceable.measuredHeight, minContentHeight)
-
-                    childNodeData?.let { nodeData ->
-                        if (nodeData.fitMinContent) {
-                            // save the previously measured minimum size if we have one
-                            nodeData.style.width = childNode.layoutWidth.takeIf { it > 0 }
-                                ?.let { YogaValue(it, YogaUnit.POINT) }
-                                ?: nodeData.style.width
-                            nodeData.style.height = childNode.layoutHeight.takeIf { it > 0 }
-                                ?.let { YogaValue(it, YogaUnit.POINT) }
-                                ?: nodeData.style.height
-                        }
-                        nodeData.style.apply(childNode)
-                    }
-                }
-            }.also {
-                // calculate flexbox for this container, which also copies compose measurements via ::measureNode()
-                node.getConstraints(constraints).let { yogaConstraints ->
-                    layoutNode?.let { node ->
-                        val fitMinContent = layoutFlexData?.fitMinContent == true
-                        val width = layoutFlexData?.let { nodeData ->
-                            (minContentWidth + nodeData.style.padding.getHorizontal()).takeIf { fitMinContent }
-                        } ?: yogaConstraints[0]
-                        val height = layoutFlexData?.let { nodeData ->
-                            (minContentHeight + nodeData.style.padding.getVertical()).takeIf { fitMinContent }
-                        } ?: yogaConstraints[1]
-                        if (fitMinContent) {
-                            node.setWidth(max(node.width.asFloatOrZero, width))
-                            node.setHeight(max(node.height.asFloatOrZero, height))
-                        }
-                        log("[Intrinsic] Calculate layout ($width, $height) node size: (${node.width}, ${node.height}); min size: (${node.minWidth}, ${node.minHeight}); max size: (${node.maxWidth}, ${node.maxHeight})")
-                        node.calculateLayout(width, height)
-                        log("[Intrinsic] Container size: (${node.layoutWidth}, ${node.layoutHeight}); fitMin: $fitMinContent; minSize: ($minContentWidth, $minContentHeight)")
-                    }
+                // assign empty node data if not present from parentData
+                childNodeData = childNodeData ?: FlexNodeData().apply {
+                    log("[Intrinsic] Creating new FlexNodeData for [${childNode.address}]")
+                    childNode.data = this
                 }
 
-            }
-            log("[Intrinsic] Done")
-            layoutState.remeasure = true
-        }
-        if (remeasurePass) {
-            log("[Remeasure] Start ($constraints)")
-            val measuredWidth =
-                node.layoutWidth.roundToInt().takeIf { it != Constraints.Infinity }
-                    ?: constraints.maxWidth
-            val measuredHeight =
-                node.layoutHeight.roundToInt().takeIf { it != Constraints.Infinity }
-                    ?: constraints.maxHeight
-            val minWidth = max(node.minWidth.asFloatOrZero, measuredWidth.toFloat())
-            val minHeight = max(node.minHeight.asFloatOrZero, measuredHeight.toFloat())
+                val minWidth: Int
+                val minHeight: Int
 
-            // apply sizes to this node
-            node.apply {
-                (data as? FlexNodeData)?.style?.apply(this)
-                setMinWidth(minWidth)
-                setMinHeight(minHeight)
-                setMaxWidth(measuredWidth.toFloat())
-                setMaxHeight(measuredHeight.toFloat())
-                getConstraints(constraints).let {
-                    // invalidate child sizes to determine final sizes relative to final size of container
-                    calculateLayout(it[0], it[1])
+                var logAction = "Updated"
+                var logTrailer = "[container]"
+
+                log("[Intrinsic] Measuring child[$index]")
+                val childPlaceable = childMeasurable.measure(Constraints())
+
+                // configure node
+                if (!childNodeData.isContainer) {
+                    childNode.setMeasureFunction(::measureNode)
+
+                    // measure intrinsic size
+                    minWidth = childPlaceable.measuredWidth
+                    minHeight = childPlaceable.measuredHeight
+
+                    if (childNodeData.minWidth != minWidth || childNodeData.minHeight != minHeight) {
+                        childNode.dirty()
+                    }
+
+                    childNodeData.minWidth = minWidth
+                    childNodeData.minHeight = minHeight
+
+                    logTrailer = "size: ($minWidth, $minHeight)"
+                } else {
+                    minWidth = childNode.horizontalPadding().toInt()
+                    minHeight = childNode.verticalPadding().toInt()
                 }
-            }
 
-            node.apply {
-                deepDirty()
-                calculateLayout(measuredWidth.toFloat(), measuredHeight.toFloat())
-            }
-
-            // now that flexbox has the final size for child nodes, force compose to match
-            placeables = measurables.mapIndexed { index, measurable ->
                 if (node.childCount <= index) {
-                    return@mapIndexed measurable.measure(Constraints())
+                    node.addChildAt(childNode, index)
+                    logAction = "Added"
                 }
-                val childNode = node.getChildAt(index)
-                val isContainer = childNode.childCount > 0
+                log("[Intrinsic] $logAction [$index][${childNode.address}], $logTrailer")
+                childNodeData.style.apply(childNode)
 
-                val paddingStart = ceil(childNode.getLayoutPadding(YogaEdge.START))
-                val paddingTop = ceil(childNode.getLayoutPadding(YogaEdge.TOP))
-                val paddingEnd = ceil(childNode.getLayoutPadding(YogaEdge.END))
-                val paddingBottom = ceil(childNode.getLayoutPadding(YogaEdge.BOTTOM))
-
-                val verticalPadding =
-                    (paddingTop + paddingBottom).takeIf { !isContainer } ?: 0f
-                val horizontalPadding =
-                    (paddingStart + paddingEnd).takeIf { !isContainer } ?: 0f
-
-                val childWidth =
-                    (childNode.layoutWidth - horizontalPadding)
-                        .roundToInt()
-                        .coerceAtLeast(0)
-                val childHeight =
-                    (childNode.layoutHeight - verticalPadding)
-                        .roundToInt()
-                        .coerceAtLeast(0)
-
-                val childConstraints = Constraints(
-                    minWidth = childWidth,
-                    minHeight = childHeight,
-                    maxWidth = childWidth,
-                    maxHeight = childHeight
-                )
-                measurable.measure(childConstraints)
-            }.also {
-                // final sync between compose and flexbox
-                node.calculateLayout(measuredWidth.toFloat(), measuredHeight.toFloat())
-                log("[Remeasure] Final container size: (${node.layoutWidth}, ${node.layoutHeight})")
+                minContentWidth = max(minWidth + horizontalPadding, minContentWidth)
+                minContentHeight = max(minHeight + verticalPadding, minContentHeight)
             }
+
+            layoutFlexData?.let { flexData ->
+                // if this node is in fitMinContent mode assign the min size accordingly
+                if (flexData.fitMinContent) {
+                    minContentWidth.takeIf { it > 0 }?.toFloat()
+                        ?.let { width ->
+                            flexData.style.minWidth =
+                                YogaValue(max(node.minWidth.asFloatOrZero, width), YogaUnit.POINT)
+                        }
+                    minContentHeight.takeIf { it > 0 }?.toFloat()
+                        ?.let { height ->
+                            flexData.style.minHeight =
+                                YogaValue(max(node.minHeight.asFloatOrZero, height), YogaUnit.POINT)
+                        }
+
+                    flexData.style.apply(node)
+
+                    log("[Intrinsic] Done; fit min size: ($minContentWidth, $minContentHeight)${if (horizontalPadding > 0 || verticalPadding > 0) "; includes padding: ($horizontalPadding, $verticalPadding)" else ""}")
+                } else {
+                    log("[Intrinsic] Done")
+                }
+            }
+
+            layoutState.remeasure = true
+
+            if (!remeasurePass) {
+                return@layout layout(0, 0) {}
+            }
+        }
+
+        log("[Remeasure] Start ($constraints)")
+
+        if (changeRoot) {
+            // if we're at the top of the updated subtree, recalculate the whole subtree once
+            node.apply {
+                getConstraints(constraints).let {
+                    // ensure we calculate the whole tree from this point
+//                    deepDirty()
+                    layoutNode?.calculateLayout(it[0], it[1])
+                    log("[Remeasure] Final container size: (${node.layoutWidth}, ${node.layoutHeight}); constraints: (${it[0]}, ${it[1]})")
+                }
+            }
+        }
+
+        // now that flexbox has the final size for child nodes, synchronize with compose
+        val placeables = measurables.mapIndexed { index, measurable ->
+            if (node.childCount <= index) {
+                log("[Remeasure] Skipping child[$index]; not in container")
+                return@mapIndexed measurable.measure(Constraints())
+            }
+            val childNode = node.getChildAt(index)
+            val isContainer = childNode.childCount > 0
+
+            val paddingStart = ceil(childNode.getLayoutPadding(YogaEdge.START))
+            val paddingTop = ceil(childNode.getLayoutPadding(YogaEdge.TOP))
+            val paddingEnd = ceil(childNode.getLayoutPadding(YogaEdge.END))
+            val paddingBottom = ceil(childNode.getLayoutPadding(YogaEdge.BOTTOM))
+
+            val verticalPadding =
+                (paddingTop + paddingBottom).takeIf { !isContainer } ?: 0f
+            val horizontalPadding =
+                (paddingStart + paddingEnd).takeIf { !isContainer } ?: 0f
+
+            val childWidth =
+                (childNode.layoutWidth - horizontalPadding)
+                    .roundToInt()
+                    .coerceAtLeast(0)
+            val childHeight =
+                (childNode.layoutHeight - verticalPadding)
+                    .roundToInt()
+                    .coerceAtLeast(0)
+
+            val childConstraints = Constraints(
+                minWidth = childWidth,
+                minHeight = childHeight,
+                maxWidth = childWidth,
+                maxHeight = childHeight
+            )
+            log("[Remeasure] Child[$index] final size: ($childWidth, $childHeight)")
+            measurable.measure(childConstraints)
         }
 
         layout(node.layoutWidth.toInt(), node.layoutHeight.toInt()) {
-            if (!remeasurePass) return@layout
-
             placeables.fastForEachIndexed { index, placeable ->
                 if (node.childCount <= index) {
                     return@fastForEachIndexed
@@ -284,7 +306,7 @@ fun Flexbox(
                 val nodeX = (childNode.layoutX + paddingStart).roundToInt()
                 val nodeY = (childNode.layoutY + paddingTop).roundToInt()
 
-                log("[Place] Child[$index][${childNode.address}] -> [${node.layoutWidth}, ${node.layoutHeight}]@($nodeX, $nodeY)")
+                log("[Place] Child[$index][${childNode.address}] -> [${childNode.layoutWidth}, ${childNode.layoutHeight}]@($nodeX, $nodeY)")
                 placeable.place(nodeX, nodeY)
             }
 
@@ -292,7 +314,7 @@ fun Flexbox(
             layoutState.layoutComplete = true
             log("[Remeasure] Done")
 
-            if (parentLayoutState?.layoutComplete != false) {
+            if (changeRoot) {
                 layoutFlexData?.debugDumpFlags?.let { dumpFlags ->
                     layoutNode?.dump(flags = dumpFlags)?.split('\n')?.fastForEach { log ->
                         Log.d(layoutFlexData?.debugLogTag ?: DEFAULT_LOG_TAG, log)

@@ -53,8 +53,6 @@ fun DepthLayout() {
                     .border(1.dp, Color.Blue)
                     .flex {
                         debugTag("text")
-                        width(100f)
-                        height(100f)
                         positionType(FlexPositionType.Absolute)
                     }
             )

@@ -48,12 +48,12 @@ fun DisconnectedLayout() {
             }
         }
 
-
         FlexRow(
             modifier = Modifier.flex {
                 alignItems(FlexAlign.Center)
                 justifyContent(FlexJustify.Center)
                 debugTag("zstack")
+                debugDump()
                 fitMinContent()
             }
         ) {

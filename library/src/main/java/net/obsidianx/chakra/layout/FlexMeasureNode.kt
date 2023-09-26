@@ -14,16 +14,15 @@ fun measureNode(
     height: Float,
     heightMode: YogaMeasureMode
 ): Long {
-    val placeable = (node.data as? FlexNodeData)?.placeable
-        ?: return 0
+    val nodeData = node.data as? FlexNodeData ?: return 0
 
     val paddingStart = node.getPadding(YogaEdge.START).asFloatOrZero
     val paddingTop = node.getPadding(YogaEdge.TOP).asFloatOrZero
     val paddingEnd = node.getPadding(YogaEdge.END).asFloatOrZero
     val paddingBottom = node.getPadding(YogaEdge.BOTTOM).asFloatOrZero
 
-    val intrinsicWidth = placeable.width + paddingStart + paddingEnd
-    val intrinsicHeight = placeable.height + paddingTop + paddingBottom
+    val intrinsicWidth = nodeData.minWidth + paddingStart + paddingEnd
+    val intrinsicHeight = nodeData.minHeight + paddingTop + paddingBottom
 
     val measuredWidth = reconcile(widthMode, width, intrinsicWidth)
     val measuredHeight = reconcile(heightMode, height, intrinsicHeight)

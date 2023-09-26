@@ -69,3 +69,15 @@ internal fun YogaNode.removeAllChildren() {
         }
     }
 }
+
+internal fun YogaNode.horizontalPadding(): Float {
+    return getPadding(YogaEdge.ALL).takeIf { it.isSet }?.asFloatOrZero?.let { it * 2 }
+        ?: getPadding(YogaEdge.HORIZONTAL).takeIf { it.isSet }?.asFloatOrZero?.let { it * 2 }
+        ?: (getPadding(YogaEdge.START).asFloatOrZero + getPadding(YogaEdge.END).asFloatOrZero)
+}
+
+internal fun YogaNode.verticalPadding(): Float {
+    return getPadding(YogaEdge.ALL).takeIf { it.isSet }?.asFloatOrZero?.let { it * 2 }
+        ?: getPadding(YogaEdge.VERTICAL).takeIf { it.isSet }?.asFloatOrZero?.let { it * 2 }
+        ?: (getPadding(YogaEdge.TOP).asFloatOrZero + getPadding(YogaEdge.BOTTOM).asFloatOrZero);
+}
