@@ -21,6 +21,6 @@ fun FlexboxStyleScope.positionType(positionType: FlexPositionType) {
     nodeData.style.positionType = positionType.yogaValue
 }
 
-fun FlexboxStyleScope.fitMinContent() {
-    nodeData.fitMinContent = true
+fun FlexboxStyleScope.fitMinContent(fit: Boolean = true) {
+    nodeData.fitMinContent = fit
 }

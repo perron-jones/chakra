@@ -62,6 +62,10 @@ fun Test(modifier: Modifier = Modifier) {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Chakra.init(this)
+//        Chakra.debugLogging = true
+
         setContent {
             var page by remember { mutableStateOf(Page.Home) }
 

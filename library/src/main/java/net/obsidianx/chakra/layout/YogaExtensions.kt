@@ -4,6 +4,7 @@ import androidx.compose.ui.unit.Constraints
 import com.facebook.yoga.YogaConstants
 import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaFlexDirection
+import com.facebook.yoga.YogaGutter
 import com.facebook.yoga.YogaNode
 import com.facebook.yoga.YogaUnit
 import com.facebook.yoga.YogaValue
@@ -70,14 +71,20 @@ internal fun YogaNode.removeAllChildren() {
     }
 }
 
-internal fun YogaNode.horizontalPadding(): Float {
-    return getPadding(YogaEdge.ALL).takeIf { it.isSet }?.asFloatOrZero?.let { it * 2 }
+internal val YogaNode.horizontalPadding: Float
+    get() = getPadding(YogaEdge.ALL).takeIf { it.isSet }?.asFloatOrZero?.let { it * 2 }
         ?: getPadding(YogaEdge.HORIZONTAL).takeIf { it.isSet }?.asFloatOrZero?.let { it * 2 }
         ?: (getPadding(YogaEdge.START).asFloatOrZero + getPadding(YogaEdge.END).asFloatOrZero)
-}
 
-internal fun YogaNode.verticalPadding(): Float {
-    return getPadding(YogaEdge.ALL).takeIf { it.isSet }?.asFloatOrZero?.let { it * 2 }
+internal val YogaNode.verticalPadding: Float
+    get() = getPadding(YogaEdge.ALL).takeIf { it.isSet }?.asFloatOrZero?.let { it * 2 }
         ?: getPadding(YogaEdge.VERTICAL).takeIf { it.isSet }?.asFloatOrZero?.let { it * 2 }
-        ?: (getPadding(YogaEdge.TOP).asFloatOrZero + getPadding(YogaEdge.BOTTOM).asFloatOrZero);
-}
+        ?: (getPadding(YogaEdge.TOP).asFloatOrZero + getPadding(YogaEdge.BOTTOM).asFloatOrZero)
+
+internal val YogaNode.horizontalGap: Float
+    get() = getGap(YogaGutter.ALL).takeUnless { it.isNaN() }
+        ?: getGap(YogaGutter.COLUMN).takeUnless { it.isNaN() } ?: 0f
+
+internal val YogaNode.verticalGap: Float
+    get() = getGap(YogaGutter.ALL).takeUnless { it.isNaN() }
+        ?: getGap(YogaGutter.ROW).takeUnless { it.isNaN() } ?: 0f

@@ -1,6 +1,5 @@
 package net.obsidianx.chakra.types
 
-import androidx.compose.ui.layout.Placeable
 import com.facebook.yoga.YogaNode
 import net.obsidianx.chakra.debug.DebugDumpFlag
 
@@ -12,6 +11,6 @@ data class FlexNodeData(
     var layoutNode: YogaNode? = null,
     var fitMinContent: Boolean = false,
     var isContainer: Boolean = false,
-    var minWidth: Int = 0,
-    var minHeight: Int = 0,
+    var minWidth: Float = 0f,
+    var minHeight: Float = 0f,
 )

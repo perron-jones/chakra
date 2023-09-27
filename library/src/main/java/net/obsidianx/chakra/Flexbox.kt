@@ -15,6 +15,7 @@ import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import com.facebook.soloader.SoLoader
 import com.facebook.yoga.YogaEdge
+import com.facebook.yoga.YogaFlexDirection
 import com.facebook.yoga.YogaNode
 import com.facebook.yoga.YogaNodeFactory
 import com.facebook.yoga.YogaUnit
@@ -25,9 +26,11 @@ import net.obsidianx.chakra.debug.dump
 import net.obsidianx.chakra.layout.FlexLayoutState
 import net.obsidianx.chakra.layout.asFloatOrZero
 import net.obsidianx.chakra.layout.getConstraints
+import net.obsidianx.chakra.layout.horizontalGap
 import net.obsidianx.chakra.layout.horizontalPadding
 import net.obsidianx.chakra.layout.measureNode
 import net.obsidianx.chakra.layout.removeAllChildren
+import net.obsidianx.chakra.layout.verticalGap
 import net.obsidianx.chakra.layout.verticalPadding
 import net.obsidianx.chakra.modifiers.flexContainer
 import net.obsidianx.chakra.types.FlexNodeData
@@ -125,6 +128,7 @@ fun Flexbox(
         }
     ) layout@{ measurables, constraints ->
         val node = layoutNode ?: return@layout layout(0, 0) {}
+        val fitMinContent = layoutFlexData?.fitMinContent == true
 
         val changeRoot = parentLayoutState?.layoutComplete != false
         val intrinsicPass = parentLayoutState?.remeasure != true || parentLayoutState.layoutComplete
@@ -138,18 +142,13 @@ fun Flexbox(
             layoutState.layoutComplete = false
             layoutState.originalStyle.apply(node)
 
-            val horizontalPadding = node.horizontalPadding().toInt()
-            val verticalPadding = node.verticalPadding().toInt()
-
-            var minContentWidth = horizontalPadding
-            var minContentHeight = verticalPadding
-
-            log("[Intrinsic] Container padding: ($horizontalPadding, $verticalPadding)")
+            var minContentWidth = 0f
+            var minContentHeight = 0f
 
             measurables.mapIndexed { index, childMeasurable ->
                 // get or add a flexbox node
                 var childNodeData = (childMeasurable.parentData as? FlexNodeData)?.also {
-                    log("[Intrinsic] Found flex node data on child [${childMeasurable.parentData.address}]")
+                    log("[Intrinsic] Found flex node data on child [${childMeasurable.parentData.address}] (minWidth: ${it.minWidth}; minHeight: ${it.minHeight})")
                 }
                 val childNode =
                     childNodeData?.layoutNode ?: makeChildNode(index).also { newNode ->
@@ -166,13 +165,13 @@ fun Flexbox(
                     childNode.data = this
                 }
 
-                val minWidth: Int
-                val minHeight: Int
+                val minWidth: Float
+                val minHeight: Float
 
                 var logAction = "Updated"
-                var logTrailer = "[container]"
+                val nodeType = if (childNodeData.isContainer) "node" else "leaf"
 
-                log("[Intrinsic] Measuring child[$index]")
+                log("[Intrinsic] Measuring $nodeType [$index][${childNode.address}]")
                 val childPlaceable = childMeasurable.measure(Constraints())
 
                 // configure node
@@ -180,8 +179,8 @@ fun Flexbox(
                     childNode.setMeasureFunction(::measureNode)
 
                     // measure intrinsic size
-                    minWidth = childPlaceable.measuredWidth
-                    minHeight = childPlaceable.measuredHeight
+                    minWidth = childPlaceable.measuredWidth.toFloat()
+                    minHeight = childPlaceable.measuredHeight.toFloat()
 
                     if (childNodeData.minWidth != minWidth || childNodeData.minHeight != minHeight) {
                         childNode.dirty()
@@ -189,27 +188,47 @@ fun Flexbox(
 
                     childNodeData.minWidth = minWidth
                     childNodeData.minHeight = minHeight
-
-                    logTrailer = "size: ($minWidth, $minHeight)"
                 } else {
-                    minWidth = childNode.horizontalPadding().toInt()
-                    minHeight = childNode.verticalPadding().toInt()
+                    minWidth = childNodeData.minWidth
+                    minHeight = childNodeData.minHeight
                 }
 
                 if (node.childCount <= index) {
                     node.addChildAt(childNode, index)
                     logAction = "Added"
                 }
-                log("[Intrinsic] $logAction [$index][${childNode.address}], $logTrailer")
+                log("[Intrinsic] $logAction ${if (childNodeData.isContainer) "node" else "leaf"} [$index][${childNode.address}], size: ($minWidth, $minHeight)")
                 childNodeData.style.apply(childNode)
 
-                minContentWidth = max(minWidth + horizontalPadding, minContentWidth)
-                minContentHeight = max(minHeight + verticalPadding, minContentHeight)
+                minContentWidth = when {
+                    fitMinContent || node.flexDirection == YogaFlexDirection.COLUMN -> max(
+                        minWidth,
+                        minContentWidth
+                    )
+
+                    node.flexDirection == YogaFlexDirection.ROW -> minContentWidth + minWidth
+                    else -> 0f
+                }
+                minContentHeight = when {
+                    fitMinContent || node.flexDirection == YogaFlexDirection.ROW -> max(
+                        minHeight,
+                        minContentHeight
+                    )
+
+                    node.flexDirection == YogaFlexDirection.COLUMN -> minContentHeight + minHeight
+                    else -> 0f
+                }
             }
 
+            minContentWidth += node.horizontalPadding + (node.horizontalGap * (node.childCount - 1))
+            minContentHeight += node.verticalPadding + (node.verticalGap * (node.childCount - 1))
+
             layoutFlexData?.let { flexData ->
+                flexData.minWidth = minContentWidth
+                flexData.minHeight = minContentHeight
+
                 // if this node is in fitMinContent mode assign the min size accordingly
-                if (flexData.fitMinContent) {
+                if (fitMinContent) {
                     minContentWidth.takeIf { it > 0 }?.toFloat()
                         ?.let { width ->
                             flexData.style.minWidth =
@@ -223,7 +242,7 @@ fun Flexbox(
 
                     flexData.style.apply(node)
 
-                    log("[Intrinsic] Done; fit min size: ($minContentWidth, $minContentHeight)${if (horizontalPadding > 0 || verticalPadding > 0) "; includes padding: ($horizontalPadding, $verticalPadding)" else ""}")
+                    log("[Intrinsic] Done; fit min size: ($minContentWidth, $minContentHeight)")
                 } else {
                     log("[Intrinsic] Done")
                 }
@@ -242,8 +261,6 @@ fun Flexbox(
             // if we're at the top of the updated subtree, recalculate the whole subtree once
             node.apply {
                 getConstraints(constraints).let {
-                    // ensure we calculate the whole tree from this point
-//                    deepDirty()
                     layoutNode?.calculateLayout(it[0], it[1])
                     log("[Remeasure] Final container size: (${node.layoutWidth}, ${node.layoutHeight}); constraints: (${it[0]}, ${it[1]})")
                 }
@@ -289,6 +306,8 @@ fun Flexbox(
         }
 
         layout(node.layoutWidth.toInt(), node.layoutHeight.toInt()) {
+            val layoutPadStart = node.getLayoutPadding(YogaEdge.START)
+            val layoutPadTop = node.getLayoutPadding(YogaEdge.TOP)
             placeables.fastForEachIndexed { index, placeable ->
                 if (node.childCount <= index) {
                     return@fastForEachIndexed
@@ -296,15 +315,15 @@ fun Flexbox(
                 val childNode = node.getChildAt(index)
                 val isContainer = childNode.childCount > 0
 
-                // Padding was removed in the measuring phase, so offset the view by the padding
-                // amount to ensure the content is in the right place
                 val paddingStart =
                     childNode.getLayoutPadding(YogaEdge.START).takeIf { !isContainer } ?: 0f
                 val paddingTop =
                     childNode.getLayoutPadding(YogaEdge.TOP).takeIf { !isContainer } ?: 0f
 
-                val nodeX = (childNode.layoutX + paddingStart).roundToInt()
-                val nodeY = (childNode.layoutY + paddingTop).roundToInt()
+                val nodeX =
+                    (childNode.layoutX + paddingStart).coerceAtLeast(layoutPadStart).roundToInt()
+                val nodeY =
+                    (childNode.layoutY + paddingTop).coerceAtLeast(layoutPadTop).roundToInt()
 
                 log("[Place] Child[$index][${childNode.address}] -> [${childNode.layoutWidth}, ${childNode.layoutHeight}]@($nodeX, $nodeY)")
                 placeable.place(nodeX, nodeY)

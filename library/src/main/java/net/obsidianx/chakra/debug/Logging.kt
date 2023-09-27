@@ -17,6 +17,7 @@ enum class DebugDumpFlag {
     Constraints,
     Layout,
     LayoutExtras,
+    Intrinsics,
     Unset;
 
     companion object {
@@ -29,6 +30,7 @@ enum class DebugDumpFlag {
             Constraints,
             Layout,
             LayoutExtras,
+            Intrinsics,
             Unset,
         )
         val ALL_SET = ALL - Unset
@@ -126,6 +128,11 @@ internal fun YogaNode.dump(flags: Set<DebugDumpFlag> = DebugDumpFlag.ALL, depth:
         "$indent  Max height: $maxHeight".takeIf { withUnset || maxHeight.isSet },
     ).filterNotNull().joinToString("\n")
 
+    val intrinsicsConfig = """
+        |$indent  Intrinsic width: ${nodeData?.minWidth}
+        |$indent  Intrinsic height: ${nodeData?.minHeight}
+    """.trimMargin()
+
     val layoutConfig = """
         |$indent  Layout width: $layoutWidth
         |$indent  Layout height: $layoutHeight
@@ -145,6 +152,9 @@ internal fun YogaNode.dump(flags: Set<DebugDumpFlag> = DebugDumpFlag.ALL, depth:
     }
     if (DebugDumpFlag.LayoutExtras in flags && layoutExtrasConfig.isNotEmpty()) {
         config.add(layoutExtrasConfig)
+    }
+    if (DebugDumpFlag.Intrinsics in flags && intrinsicsConfig.isNotEmpty()) {
+        config.add(intrinsicsConfig)
     }
     if (DebugDumpFlag.Dimensions in flags && dimensionsConfig.isNotEmpty()) {
         config.add(dimensionsConfig)
