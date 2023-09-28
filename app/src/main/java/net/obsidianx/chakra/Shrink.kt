@@ -2,7 +2,6 @@ package net.obsidianx.chakra
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -71,21 +70,19 @@ fun FlexboxScope.MagentaBox(content: @Composable FlexboxScope.() -> Unit = {}) {
 
 @Composable
 fun Shrink() {
-    Row {
-        Flexbox(
-            Modifier.flex {
-                direction(FlexDirection.Column)
-                debugDump(flags = DebugDumpFlag.ALL_SET)
-            }
-        ) {
-            repeat(4) { green ->
-                GreenBox {
-                    repeat(green) {
-                        BlueBox {
-                            repeat(green) {
-                                MagentaBox {
-                                    Text("Hi", softWrap = false, maxLines = 1)
-                                }
+    Flexbox(
+        Modifier.flex {
+            direction(FlexDirection.Column)
+            debugDump(flags = DebugDumpFlag.ALL_SET)
+        }
+    ) {
+        repeat(4) { green ->
+            GreenBox {
+                repeat(green) {
+                    BlueBox {
+                        repeat(green) {
+                            MagentaBox {
+                                Text("Hi", softWrap = false, maxLines = 1)
                             }
                         }
                     }

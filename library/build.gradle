@@ -45,10 +45,13 @@ android {
 }
 
 dependencies {
+    implementation platform(libs.compose.bom)
     implementation libs.androidx.core.ktx
     implementation libs.androidx.appcompat
     implementation libs.compose
     implementation libs.compose.layout
+    implementation libs.compose.tooling
+    implementation libs.compose.tooling.preview
     implementation libs.compose.util
     implementation libs.facebook.soloader
     implementation libs.facebook.yoga
@@ -64,7 +67,7 @@ publishing {
         release(MavenPublication) {
             groupId = 'com.github.obsidianx'
             artifactId = 'chakra'
-            version = '0.2.5'
+            version = '0.2.6'
 
             afterEvaluate {
                 from components.release

@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import net.obsidianx.chakra.debug.debugDump
 import net.obsidianx.chakra.debug.debugTag
 import net.obsidianx.chakra.modifiers.alignItems
 import net.obsidianx.chakra.modifiers.direction
@@ -38,6 +39,7 @@ fun SwapContent() {
                 .flex {
                     fitMinContent()
                     debugTag("outer")
+                    debugDump()
                 }) {
             if (showOne) {
                 Flexbox(modifier = Modifier

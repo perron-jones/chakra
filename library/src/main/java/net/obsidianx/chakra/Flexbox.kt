@@ -28,6 +28,7 @@ import net.obsidianx.chakra.layout.asFloatOrZero
 import net.obsidianx.chakra.layout.getConstraints
 import net.obsidianx.chakra.layout.horizontalGap
 import net.obsidianx.chakra.layout.horizontalPadding
+import net.obsidianx.chakra.layout.isSet
 import net.obsidianx.chakra.layout.measureNode
 import net.obsidianx.chakra.layout.removeAllChildren
 import net.obsidianx.chakra.layout.verticalGap
@@ -138,7 +139,7 @@ fun Flexbox(
         log("[Measure] Root: ${parentLayoutState == null}; Intrinsic: $intrinsicPass; Remeasure: $remeasurePass; Change root: $changeRoot")
 
         if (intrinsicPass) {
-            log("[Intrinsic] Start (child nodes: ${measurables.size}) ($constraints)")
+            log("[Intrinsic] Start (child nodes: ${measurables.size}) (fitMinContent: $fitMinContent) ($constraints)")
             layoutState.layoutComplete = false
             layoutState.originalStyle.apply(node)
 
@@ -147,16 +148,13 @@ fun Flexbox(
 
             measurables.mapIndexed { index, childMeasurable ->
                 // get or add a flexbox node
-                var childNodeData = (childMeasurable.parentData as? FlexNodeData)?.also {
-                    log("[Intrinsic] Found flex node data on child [${childMeasurable.parentData.address}] (minWidth: ${it.minWidth}; minHeight: ${it.minHeight})")
-                }
-                val childNode =
-                    childNodeData?.layoutNode ?: makeChildNode(index).also { newNode ->
-                        childNodeData?.let {
-                            it.layoutNode = newNode
-                            newNode.data = it
-                        }
+                var childNodeData = childMeasurable.parentData as? FlexNodeData
+                val childNode = childNodeData?.layoutNode ?: makeChildNode(index).also { newNode ->
+                    childNodeData?.let {
+                        it.layoutNode = newNode
+                        newNode.data = it
                     }
+                }
                 layoutState.childNode = childNode
 
                 // assign empty node data if not present from parentData
@@ -165,11 +163,18 @@ fun Flexbox(
                     childNode.data = this
                 }
 
+                childNodeData.debugTag.takeIf { it.isNotEmpty() }?.let { debugTag ->
+                    log("[Intrinsic] Child debug tag: $debugTag [$index][${childNode.address}]")
+                }
+
                 val minWidth: Float
                 val minHeight: Float
 
-                var logAction = "Updated"
                 val nodeType = if (childNodeData.isContainer) "node" else "leaf"
+
+                // apply style prior to measuring so we don't clobber any style updates a child
+                // container may set for itself in the fitMinContent mode
+                childNodeData.style.apply(childNode)
 
                 log("[Intrinsic] Measuring $nodeType [$index][${childNode.address}]")
                 val childPlaceable = childMeasurable.measure(Constraints())
@@ -189,16 +194,16 @@ fun Flexbox(
                     childNodeData.minWidth = minWidth
                     childNodeData.minHeight = minHeight
                 } else {
-                    minWidth = childNodeData.minWidth
-                    minHeight = childNodeData.minHeight
+                    minWidth = max(childNodeData.minWidth, childNode.width.asFloatOrZero)
+                    minHeight = max(childNodeData.minHeight, childNode.height.asFloatOrZero)
                 }
 
+                var logAction = "Updated"
                 if (node.childCount <= index) {
                     node.addChildAt(childNode, index)
                     logAction = "Added"
                 }
                 log("[Intrinsic] $logAction ${if (childNodeData.isContainer) "node" else "leaf"} [$index][${childNode.address}], size: ($minWidth, $minHeight)")
-                childNodeData.style.apply(childNode)
 
                 minContentWidth = when {
                     fitMinContent || node.flexDirection == YogaFlexDirection.COLUMN -> max(
@@ -229,18 +234,12 @@ fun Flexbox(
 
                 // if this node is in fitMinContent mode assign the min size accordingly
                 if (fitMinContent) {
-                    minContentWidth.takeIf { it > 0 }?.toFloat()
-                        ?.let { width ->
-                            flexData.style.minWidth =
-                                YogaValue(max(node.minWidth.asFloatOrZero, width), YogaUnit.POINT)
-                        }
-                    minContentHeight.takeIf { it > 0 }?.toFloat()
-                        ?.let { height ->
-                            flexData.style.minHeight =
-                                YogaValue(max(node.minHeight.asFloatOrZero, height), YogaUnit.POINT)
-                        }
-
-                    flexData.style.apply(node)
+                    minContentWidth.takeIf { it > 0 }?.let { width ->
+                        node.setWidth(max(flexData.style.width.asFloatOrZero, width))
+                    }
+                    minContentHeight.takeIf { it > 0 }?.let { height ->
+                        node.setHeight(max(flexData.style.height.asFloatOrZero, height))
+                    }
 
                     log("[Intrinsic] Done; fit min size: ($minContentWidth, $minContentHeight)")
                 } else {

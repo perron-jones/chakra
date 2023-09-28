@@ -48,7 +48,7 @@ android {
 
 dependencies {
     implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.0')
-    implementation platform('androidx.compose:compose-bom:2022.10.00')
+    implementation platform(libs.compose.bom)
 
     implementation libs.androidx.core.ktx
     implementation libs.androidx.lifecycle.runtime.ktx
@@ -65,7 +65,7 @@ dependencies {
 
     testImplementation libs.test.junit
 
-    androidTestImplementation platform('androidx.compose:compose-bom:2022.10.00')
+    androidTestImplementation platform(libs.compose.bom)
     androidTestImplementation libs.test.androidx.junit
     androidTestImplementation libs.test.espresso.core
     androidTestImplementation libs.test.compose.junit4
