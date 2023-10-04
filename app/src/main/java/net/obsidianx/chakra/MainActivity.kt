@@ -36,17 +36,6 @@ enum class Page {
     UpdateContents,
 }
 
-@Composable
-fun Test(modifier: Modifier = Modifier) {
-    Flexbox(modifier = modifier
-        .flex {
-            debugTag("in")
-            padding(4.dp)
-        }
-        .border(1.dp, Color.Red)) {
-    }
-}
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

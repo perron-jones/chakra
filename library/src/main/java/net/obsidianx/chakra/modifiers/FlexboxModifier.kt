@@ -35,6 +35,6 @@ fun Modifier.flex(block: FlexboxStyleScope.() -> Unit = {}) =
         )
     }
 
-internal fun Modifier.flexContainer() = flex {
+fun Modifier.flexContainer() = flex {
     nodeData.isContainer = true
 }

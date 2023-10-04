@@ -54,10 +54,23 @@ fun FlexboxStyleScope.gap(all: Dp? = null, horizontal: Dp? = null, vertical: Dp?
     if (listOf(all, horizontal, vertical).count { it != null } > 1) {
         throw IllegalArgumentException("Only set one kind of gap in FlexboxStyleScope.gap")
     }
-    val gutter = when {
-        vertical != null -> FlexGutter.Row
-        horizontal != null -> FlexGutter.Column
-        else -> FlexGutter.All
+    val gutter: FlexGutter
+    val value: Float
+    when {
+        vertical != null -> {
+            gutter = FlexGutter.Row
+            value = vertical.value
+        }
+
+        horizontal != null -> {
+            gutter = FlexGutter.Column
+            value = horizontal.value
+        }
+
+        else -> {
+            gutter = FlexGutter.All
+            value = all?.value ?: 0f
+        }
     }
-    nodeData.style.gap = FlexGap(gutter, (all?.value ?: 0f) * density.density)
+    nodeData.style.gap = FlexGap(gutter, value * density.density)
 }

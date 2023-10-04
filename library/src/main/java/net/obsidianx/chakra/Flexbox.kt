@@ -7,9 +7,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.UiComposable
 import androidx.compose.ui.layout.MultiMeasureLayout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.inspectable
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
@@ -28,6 +30,7 @@ import net.obsidianx.chakra.layout.asFloatOrZero
 import net.obsidianx.chakra.layout.getConstraints
 import net.obsidianx.chakra.layout.horizontalGap
 import net.obsidianx.chakra.layout.horizontalPadding
+import net.obsidianx.chakra.layout.isContainer
 import net.obsidianx.chakra.layout.isSet
 import net.obsidianx.chakra.layout.measureNode
 import net.obsidianx.chakra.layout.removeAllChildren
@@ -40,9 +43,9 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 @Composable
-fun FlexboxScope.Flexbox(
+inline fun FlexboxScope.Flexbox(
     modifier: Modifier = Modifier,
-    content: @Composable FlexboxScope.() -> Unit = {}
+    crossinline content: @Composable FlexboxScope.() -> Unit = {}
 ) {
     Flexbox(
         modifier = modifier,
@@ -52,6 +55,7 @@ fun FlexboxScope.Flexbox(
 
 @SuppressLint("RememberReturnType")
 @Composable
+@UiComposable
 fun Flexbox(
     modifier: Modifier = Modifier,
     parentLayoutState: FlexLayoutState? = null,
@@ -119,7 +123,7 @@ fun Flexbox(
                 val placeable = measurable.measure(constraints)
                 layout(placeable.measuredWidth, placeable.measuredHeight) {
                     log("[Layout] Place [${layoutNode?.layoutWidth}, ${layoutNode?.layoutHeight}]@(${layoutNode?.layoutX}, ${layoutNode?.layoutY})")
-                    placeable.placeRelative(0, 0)
+                    placeable.place(0, 0)
                 }
             },
         content = {
@@ -273,7 +277,6 @@ fun Flexbox(
                 return@mapIndexed measurable.measure(Constraints())
             }
             val childNode = node.getChildAt(index)
-            val isContainer = childNode.childCount > 0
 
             val paddingStart = ceil(childNode.getLayoutPadding(YogaEdge.START))
             val paddingTop = ceil(childNode.getLayoutPadding(YogaEdge.TOP))
@@ -281,9 +284,9 @@ fun Flexbox(
             val paddingBottom = ceil(childNode.getLayoutPadding(YogaEdge.BOTTOM))
 
             val verticalPadding =
-                (paddingTop + paddingBottom).takeIf { !isContainer } ?: 0f
+                (paddingTop + paddingBottom).takeIf { !childNode.isContainer } ?: 0f
             val horizontalPadding =
-                (paddingStart + paddingEnd).takeIf { !isContainer } ?: 0f
+                (paddingStart + paddingEnd).takeIf { !childNode.isContainer } ?: 0f
 
             val childWidth =
                 (childNode.layoutWidth - horizontalPadding)
@@ -312,12 +315,11 @@ fun Flexbox(
                     return@fastForEachIndexed
                 }
                 val childNode = node.getChildAt(index)
-                val isContainer = childNode.childCount > 0
 
                 val paddingStart =
-                    childNode.getLayoutPadding(YogaEdge.START).takeIf { !isContainer } ?: 0f
+                    childNode.getLayoutPadding(YogaEdge.START).takeIf { !childNode.isContainer } ?: 0f
                 val paddingTop =
-                    childNode.getLayoutPadding(YogaEdge.TOP).takeIf { !isContainer } ?: 0f
+                    childNode.getLayoutPadding(YogaEdge.TOP).takeIf { !childNode.isContainer } ?: 0f
 
                 val nodeX =
                     (childNode.layoutX + paddingStart).coerceAtLeast(layoutPadStart).roundToInt()

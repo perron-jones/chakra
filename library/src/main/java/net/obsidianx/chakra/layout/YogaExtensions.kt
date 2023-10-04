@@ -8,6 +8,7 @@ import com.facebook.yoga.YogaGutter
 import com.facebook.yoga.YogaNode
 import com.facebook.yoga.YogaUnit
 import com.facebook.yoga.YogaValue
+import net.obsidianx.chakra.types.FlexNodeData
 
 internal val YogaValue.isSet
     get() = unit == YogaUnit.PERCENT || unit == YogaUnit.POINT
@@ -88,3 +89,6 @@ internal val YogaNode.horizontalGap: Float
 internal val YogaNode.verticalGap: Float
     get() = getGap(YogaGutter.ALL).takeUnless { it.isNaN() }
         ?: getGap(YogaGutter.ROW).takeUnless { it.isNaN() } ?: 0f
+
+internal val YogaNode.isContainer: Boolean
+    get() = (data as? FlexNodeData)?.isContainer == true
