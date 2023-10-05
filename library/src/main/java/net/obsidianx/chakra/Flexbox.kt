@@ -11,17 +11,17 @@ import androidx.compose.ui.UiComposable
 import androidx.compose.ui.layout.MultiMeasureLayout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.inspectable
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import com.facebook.soloader.SoLoader
+import com.facebook.yoga.YogaAlign
 import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaFlexDirection
 import com.facebook.yoga.YogaNode
 import com.facebook.yoga.YogaNodeFactory
+import com.facebook.yoga.YogaPositionType
 import com.facebook.yoga.YogaUnit
-import com.facebook.yoga.YogaValue
 import net.obsidianx.chakra.debug.DEFAULT_LOG_TAG
 import net.obsidianx.chakra.debug.address
 import net.obsidianx.chakra.debug.dump
@@ -30,8 +30,9 @@ import net.obsidianx.chakra.layout.asFloatOrZero
 import net.obsidianx.chakra.layout.getConstraints
 import net.obsidianx.chakra.layout.horizontalGap
 import net.obsidianx.chakra.layout.horizontalPadding
+import net.obsidianx.chakra.layout.isColumn
 import net.obsidianx.chakra.layout.isContainer
-import net.obsidianx.chakra.layout.isSet
+import net.obsidianx.chakra.layout.isRow
 import net.obsidianx.chakra.layout.measureNode
 import net.obsidianx.chakra.layout.removeAllChildren
 import net.obsidianx.chakra.layout.verticalGap
@@ -99,8 +100,11 @@ fun Flexbox(
                 // extract rules from own modifier
                 if (layoutFlexData == null) {
                     layoutFlexData = (measurable.parentData as? FlexNodeData)?.also {
+                        log("[Layout] Got node data from modifier [${it.address}] (fitMinContent: ${it.fitMinContent})")
                         layoutState.originalStyle = it.style.copy()
                     }
+                } else {
+                    log("[Layout] Using existing node data: [${layoutFlexData.address}] (fitMinContent: ${layoutFlexData?.fitMinContent}]")
                 }
                 if (layoutNode == null) {
                     layoutState.selfNode = (layoutFlexData?.layoutNode?.also {
@@ -111,9 +115,11 @@ fun Flexbox(
                     layoutNode = layoutState.selfNode
                 }
                 if (layoutFlexData == null) {
+                    log("[Layout] No node data from modifier (node.data? [${layoutNode?.data.address}])")
                     layoutFlexData = (layoutNode?.data as? FlexNodeData ?: FlexNodeData()).also {
                         it.style = layoutState.originalStyle.copy()
                     }
+                    log("[Layout] Using node data: [${layoutFlexData.address}] (fitMinContent: ${layoutFlexData?.fitMinContent}]")
                 }
                 layoutFlexData?.isContainer = true
                 layoutFlexData?.style?.let { origStyle ->
@@ -180,6 +186,12 @@ fun Flexbox(
                 // container may set for itself in the fitMinContent mode
                 childNodeData.style.apply(childNode)
 
+                var logAction = "Updated"
+                if (node.childCount <= index) {
+                    node.addChildAt(childNode, index)
+                    logAction = "Added"
+                }
+
                 log("[Intrinsic] Measuring $nodeType [$index][${childNode.address}]")
                 val childPlaceable = childMeasurable.measure(Constraints())
 
@@ -192,6 +204,7 @@ fun Flexbox(
                     minHeight = childPlaceable.measuredHeight.toFloat()
 
                     if (childNodeData.minWidth != minWidth || childNodeData.minHeight != minHeight) {
+                        log("[Intrinsic] Size of child[$index][${childNode.address}] has changed; marked dirty")
                         childNode.dirty()
                     }
 
@@ -202,11 +215,6 @@ fun Flexbox(
                     minHeight = max(childNodeData.minHeight, childNode.height.asFloatOrZero)
                 }
 
-                var logAction = "Updated"
-                if (node.childCount <= index) {
-                    node.addChildAt(childNode, index)
-                    logAction = "Added"
-                }
                 log("[Intrinsic] $logAction ${if (childNodeData.isContainer) "node" else "leaf"} [$index][${childNode.address}], size: ($minWidth, $minHeight)")
 
                 minContentWidth = when {
@@ -238,11 +246,39 @@ fun Flexbox(
 
                 // if this node is in fitMinContent mode assign the min size accordingly
                 if (fitMinContent) {
-                    minContentWidth.takeIf { it > 0 }?.let { width ->
-                        node.setWidth(max(flexData.style.width.asFloatOrZero, width))
+                    val isInFlow = flexData.style.positionType == YogaPositionType.RELATIVE
+                    val parentIsRow = node.owner?.flexDirection?.isRow == true
+                    val parentIsColumn = node.owner?.flexDirection?.isColumn == true
+                    val crossStretch = node.owner?.alignItems == YogaAlign.STRETCH && isInFlow
+
+                    // don't override stretch from parent if set on cross-axis
+                    // don't override width or height defined as percentages
+
+                    if (flexData.style.width.unit == YogaUnit.PERCENT || (crossStretch && parentIsColumn)) {
+                        node.setMinWidth(
+                            max(
+                                minContentWidth,
+                                flexData.style.minWidth.asFloatOrZero
+                            )
+                        )
+                    } else if (!crossStretch || parentIsRow) {
+                        node.setWidth(max(minContentWidth, flexData.style.width.asFloatOrZero))
                     }
-                    minContentHeight.takeIf { it > 0 }?.let { height ->
-                        node.setHeight(max(flexData.style.height.asFloatOrZero, height))
+
+                    if (flexData.style.height.unit == YogaUnit.PERCENT || (crossStretch && parentIsRow)) {
+                        node.setMinHeight(
+                            max(
+                                minContentHeight,
+                                flexData.style.minHeight.asFloatOrZero
+                            )
+                        )
+                    } else if (!crossStretch || parentIsColumn) {
+                        node.setHeight(
+                            max(
+                                minContentHeight,
+                                flexData.style.height.asFloatOrZero
+                            )
+                        )
                     }
 
                     log("[Intrinsic] Done; fit min size: ($minContentWidth, $minContentHeight)")
@@ -317,7 +353,8 @@ fun Flexbox(
                 val childNode = node.getChildAt(index)
 
                 val paddingStart =
-                    childNode.getLayoutPadding(YogaEdge.START).takeIf { !childNode.isContainer } ?: 0f
+                    childNode.getLayoutPadding(YogaEdge.START).takeIf { !childNode.isContainer }
+                        ?: 0f
                 val paddingTop =
                     childNode.getLayoutPadding(YogaEdge.TOP).takeIf { !childNode.isContainer } ?: 0f
 

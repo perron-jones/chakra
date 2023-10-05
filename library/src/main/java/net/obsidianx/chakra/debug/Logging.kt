@@ -119,6 +119,10 @@ internal fun YogaNode.dump(flags: Set<DebugDumpFlag> = DebugDumpFlag.ALL, depth:
         getEdges(withUnset, ::getBorder).takeIf { it.isNotEmpty() }?.let { border ->
             add("$indent  Border: $border")
         }
+        add("$indent  Position type: $positionType")
+        getEdges(withUnset, ::getPosition).takeIf { it.isNotEmpty() }?.let { position ->
+            add("$indent  Position: $position")
+        }
     }.joinToString("\n")
 
     val constraintsConfig = arrayOf(

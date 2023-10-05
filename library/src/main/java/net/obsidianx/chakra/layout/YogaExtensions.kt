@@ -14,10 +14,10 @@ internal val YogaValue.isSet
     get() = unit == YogaUnit.PERCENT || unit == YogaUnit.POINT
 
 internal val YogaValue.asFloatOrZero: Float
-    get() = value.takeIf { isSet } ?: 0f
+    get() = value.takeIf { unit == YogaUnit.POINT } ?: 0f
 
 internal val YogaValue.asFloatOrNan: Float
-    get() = value.takeIf { isSet } ?: Float.NaN
+    get() = value.takeIf { unit == YogaUnit.POINT } ?: Float.NaN
 
 internal val YogaFlexDirection.isRow
     get() = this == YogaFlexDirection.ROW || this == YogaFlexDirection.ROW_REVERSE
