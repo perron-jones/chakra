@@ -33,6 +33,7 @@ import net.obsidianx.chakra.layout.horizontalPadding
 import net.obsidianx.chakra.layout.isColumn
 import net.obsidianx.chakra.layout.isContainer
 import net.obsidianx.chakra.layout.isRow
+import net.obsidianx.chakra.layout.isSet
 import net.obsidianx.chakra.layout.measureNode
 import net.obsidianx.chakra.layout.removeAllChildren
 import net.obsidianx.chakra.layout.verticalGap
@@ -254,31 +255,39 @@ fun Flexbox(
                     // don't override stretch from parent if set on cross-axis
                     // don't override width or height defined as percentages
 
-                    if (flexData.style.width.unit == YogaUnit.PERCENT || (crossStretch && parentIsColumn)) {
-                        node.setMinWidth(
-                            max(
-                                minContentWidth,
-                                flexData.style.minWidth.asFloatOrZero
-                            )
-                        )
-                    } else if (!crossStretch || parentIsRow) {
-                        node.setWidth(max(minContentWidth, flexData.style.width.asFloatOrZero))
+                    if (!node.width.isSet) {
+                        if (flexData.style.width.unit == YogaUnit.PERCENT || (crossStretch && parentIsColumn)) {
+                            if (!node.minWidth.isSet) {
+                                node.setMinWidth(
+                                    max(
+                                        minContentWidth,
+                                        flexData.style.minWidth.asFloatOrZero
+                                    )
+                                )
+                            }
+                        } else if (!crossStretch || parentIsRow) {
+                            node.setWidth(max(minContentWidth, flexData.style.width.asFloatOrZero))
+                        }
                     }
 
-                    if (flexData.style.height.unit == YogaUnit.PERCENT || (crossStretch && parentIsRow)) {
-                        node.setMinHeight(
-                            max(
-                                minContentHeight,
-                                flexData.style.minHeight.asFloatOrZero
+                    if (!node.height.isSet) {
+                        if (flexData.style.height.unit == YogaUnit.PERCENT || (crossStretch && parentIsRow)) {
+                            if (!node.minHeight.isSet) {
+                                node.setMinHeight(
+                                    max(
+                                        minContentHeight,
+                                        flexData.style.minHeight.asFloatOrZero
+                                    )
+                                )
+                            }
+                        } else if (!crossStretch || parentIsColumn) {
+                            node.setHeight(
+                                max(
+                                    minContentHeight,
+                                    flexData.style.height.asFloatOrZero
+                                )
                             )
-                        )
-                    } else if (!crossStretch || parentIsColumn) {
-                        node.setHeight(
-                            max(
-                                minContentHeight,
-                                flexData.style.height.asFloatOrZero
-                            )
-                        )
+                        }
                     }
 
                     log("[Intrinsic] Done; fit min size: ($minContentWidth, $minContentHeight)")
