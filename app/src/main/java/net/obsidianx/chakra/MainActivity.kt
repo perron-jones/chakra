@@ -34,6 +34,7 @@ enum class Page {
     DepthLayout,
     SwapContent,
     UpdateContents,
+    TextWrap,
 }
 
 class MainActivity : ComponentActivity() {
@@ -77,6 +78,7 @@ class MainActivity : ComponentActivity() {
                             Page.DepthLayout -> DepthLayout()
                             Page.SwapContent -> SwapContent()
                             Page.UpdateContents -> UpdateContents()
+                            Page.TextWrap -> TextWrap()
                         }
                     }
                 }
