@@ -1,11 +1,13 @@
 package net.obsidianx.chakra.layout
 
+import android.util.Log
 import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaMeasureMode
 import com.facebook.yoga.YogaMeasureOutput
 import com.facebook.yoga.YogaNode
+import net.obsidianx.chakra.Chakra
+import net.obsidianx.chakra.debug.address
 import net.obsidianx.chakra.types.FlexNodeData
-import kotlin.math.min
 
 fun measureNode(
     node: YogaNode,
@@ -21,18 +23,38 @@ fun measureNode(
     val paddingEnd = node.getPadding(YogaEdge.END).asFloatOrZero
     val paddingBottom = node.getPadding(YogaEdge.BOTTOM).asFloatOrZero
 
-    val intrinsicWidth = nodeData.minWidth + paddingStart + paddingEnd
-    val intrinsicHeight = nodeData.minHeight + paddingTop + paddingBottom
+    val intrinsicMinWidth = nodeData.minWidth + paddingStart + paddingEnd
+    val intrinsicMinHeight = nodeData.minHeight + paddingTop + paddingBottom
+    val intrinsicMaxWidth = nodeData.maxWidth + paddingStart + paddingEnd
+    val intrinsicMaxHeight = nodeData.maxHeight + paddingTop + paddingBottom
 
-    val measuredWidth = reconcile(widthMode, width, intrinsicWidth)
-    val measuredHeight = reconcile(heightMode, height, intrinsicHeight)
+    val measuredWidth = reconcile(widthMode, width, intrinsicMinWidth, intrinsicMaxWidth)
+    val measuredHeight = reconcile(heightMode, height, intrinsicMinHeight, intrinsicMaxHeight)
+    val tag = (node.data as? FlexNodeData)?.debugTag ?: "??"
+    log(
+        "tag: $tag " +
+                "provided: ($width, $height) " +
+                "intrinsic min: ($intrinsicMinWidth, $intrinsicMinHeight) " +
+                "intrinsic max: ($intrinsicMaxWidth, $intrinsicMaxHeight) " +
+                "measured: ($measuredWidth, $measuredHeight) " +
+                "width mode: $widthMode " +
+                "height mode $heightMode " +
+                "is Height Nan: ${height.isNaN()} " +
+                "is Height Infinite: ${height.isInfinite()}"
+    )
 
     return YogaMeasureOutput.make(measuredWidth, measuredHeight)
 }
 
-private fun reconcile(mode: YogaMeasureMode, size: Float, intrinsicSize: Float): Float =
+private fun log(msg: String) {
+    if (Chakra.debugLogging) {
+        Log.d("Chakra", "[measureNode] $msg")
+    }
+}
+
+private fun reconcile(mode: YogaMeasureMode, size: Float, intrinsicMinSize: Float, intrinsicMaxSize: Float): Float =
     when (mode) {
-        YogaMeasureMode.UNDEFINED -> intrinsicSize
-        YogaMeasureMode.EXACTLY -> size.takeIf { it != 0f } ?: intrinsicSize
-        YogaMeasureMode.AT_MOST -> min(size, intrinsicSize)
+        YogaMeasureMode.UNDEFINED -> if(intrinsicMaxSize.isFinite()) intrinsicMaxSize else intrinsicMinSize
+        YogaMeasureMode.EXACTLY -> size.takeIf { it != 0f } ?: intrinsicMinSize
+        YogaMeasureMode.AT_MOST -> size.coerceAtMost(intrinsicMaxSize)
     }

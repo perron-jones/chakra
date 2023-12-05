@@ -35,6 +35,7 @@ enum class Page {
     SwapContent,
     UpdateContents,
     TextWrap,
+    TextWrapComplex,
 }
 
 class MainActivity : ComponentActivity() {
@@ -79,6 +80,7 @@ class MainActivity : ComponentActivity() {
                             Page.SwapContent -> SwapContent()
                             Page.UpdateContents -> UpdateContents()
                             Page.TextWrap -> TextWrap()
+                            Page.TextWrapComplex -> TextWrapComplex()
                         }
                     }
                 }

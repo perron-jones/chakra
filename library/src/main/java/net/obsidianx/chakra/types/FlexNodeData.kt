@@ -13,4 +13,6 @@ data class FlexNodeData(
     var isContainer: Boolean = false,
     var minWidth: Float = 0f,
     var minHeight: Float = 0f,
+    var maxWidth: Float = Float.MAX_VALUE,
+    var maxHeight: Float = Float.MAX_VALUE,
 )
