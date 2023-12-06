@@ -19,4 +19,6 @@ object Chakra {
      * only useful when hacking on Chakra itself.
      */
     var debugLogging: Boolean = false
+
+    var isTextWrappingEnabled = true
 }

@@ -34,6 +34,8 @@ enum class Page {
     DepthLayout,
     SwapContent,
     UpdateContents,
+    TextWrap,
+    TextWrapComplex,
 }
 
 class MainActivity : ComponentActivity() {
@@ -42,6 +44,7 @@ class MainActivity : ComponentActivity() {
 
         Chakra.init(this)
         Chakra.debugLogging = true
+        Chakra.isTextWrappingEnabled = true
 
         setContent {
             var page by remember { mutableStateOf(Page.Home) }
@@ -77,6 +80,8 @@ class MainActivity : ComponentActivity() {
                             Page.DepthLayout -> DepthLayout()
                             Page.SwapContent -> SwapContent()
                             Page.UpdateContents -> UpdateContents()
+                            Page.TextWrap -> TextWrap()
+                            Page.TextWrapComplex -> TextWrapComplex()
                         }
                     }
                 }

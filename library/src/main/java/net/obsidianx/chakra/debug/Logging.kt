@@ -133,8 +133,10 @@ internal fun YogaNode.dump(flags: Set<DebugDumpFlag> = DebugDumpFlag.ALL, depth:
     ).filterNotNull().joinToString("\n")
 
     val intrinsicsConfig = """
-        |$indent  Intrinsic width: ${nodeData?.minWidth}
-        |$indent  Intrinsic height: ${nodeData?.minHeight}
+        |$indent  Intrinsic min width: ${nodeData?.minWidth}
+        |$indent  Intrinsic min height: ${nodeData?.minHeight}
+        |$indent  Intrinsic max width: ${nodeData?.maxWidth}
+        |$indent  Intrinsic max height: ${nodeData?.maxHeight}
     """.trimMargin()
 
     val layoutConfig = """

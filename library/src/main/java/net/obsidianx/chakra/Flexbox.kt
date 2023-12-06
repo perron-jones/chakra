@@ -189,18 +189,33 @@ fun Flexbox(
 
                 var logAction = "Updated"
                 if (node.childCount <= index) {
+                    clearParentNodeIfNecessary(childNode)
                     node.addChildAt(childNode, index)
                     logAction = "Added"
                 }
 
                 log("[Intrinsic] Measuring $nodeType [$index][${childNode.address}]")
-                val childPlaceable = childMeasurable.measure(Constraints())
+                // Provides intrinsic min
+                val maxConstraintsForMinMeasure = getMaxConstraintForIntrinsicMinMeasure(childNodeData, constraints)
+                val childPlaceable = childMeasurable.measure(
+                    Constraints(
+                        maxWidth = maxConstraintsForMinMeasure.maxWidth,
+                        maxHeight = maxConstraintsForMinMeasure.maxHeight
+                    )
+                )
 
                 // configure node
                 if (!childNodeData.isContainer) {
+                    var maxIntrinsicWidth: Int? = null
+                    var maxIntrinsicHeight: Int? = null
+                    if (Chakra.isTextWrappingEnabled) {
+                        maxIntrinsicWidth = childMeasurable.maxIntrinsicWidth(constraints.maxHeight)
+                        maxIntrinsicHeight = childMeasurable.maxIntrinsicHeight(constraints.maxWidth)
+                    }
+                    log("[Instrinsic] constraints for calculating max intrinsics for ${childNodeData.debugTag}: (${constraints.maxWidth}, ${constraints.maxHeight})")
                     childNode.setMeasureFunction(::measureNode)
 
-                    // measure intrinsic size
+                    // measure min intrinsic size
                     minWidth = childPlaceable.measuredWidth.toFloat()
                     minHeight = childPlaceable.measuredHeight.toFloat()
 
@@ -211,6 +226,8 @@ fun Flexbox(
 
                     childNodeData.minWidth = minWidth
                     childNodeData.minHeight = minHeight
+                    maxIntrinsicWidth?.let { childNodeData.maxWidth = it.toFloat() }
+                    maxIntrinsicHeight?.let { childNodeData.maxHeight = it.toFloat() }
                 } else {
                     minWidth = max(childNodeData.minWidth, childNode.width.asFloatOrZero)
                     minHeight = max(childNodeData.minHeight, childNode.height.asFloatOrZero)
@@ -307,6 +324,7 @@ fun Flexbox(
 
         if (changeRoot) {
             // if we're at the top of the updated subtree, recalculate the whole subtree once
+            log("[Remeasure] Initial container size: (${node.layoutWidth}, ${node.layoutHeight})")
             node.apply {
                 getConstraints(constraints).let {
                     layoutNode?.calculateLayout(it[0], it[1])
@@ -390,3 +408,41 @@ fun Flexbox(
         }
     }
 }
+
+/**
+ * Get constraints to use for measuring the child node.
+ * This ensures the upoer bound for the cross-axis is not lost, if it was ever present,
+ * when flex box scopes are nested.
+ */
+private fun getMaxConstraintForIntrinsicMinMeasure(
+    childNodeData: FlexNodeData,
+    constraints: Constraints
+): IntrinsicMinMeasurementMaxConstraints {
+    return if (Chakra.isTextWrappingEnabled) {
+        val width = if (childNodeData.isContainer
+            && (childNodeData.style.flexDirection == YogaFlexDirection.COLUMN
+                    || childNodeData.style.flexDirection == YogaFlexDirection.COLUMN_REVERSE)
+        ) constraints.maxWidth else Constraints.Infinity
+        val height =
+            if (childNodeData.isContainer && (childNodeData.style.flexDirection == YogaFlexDirection.ROW
+                        || childNodeData.style.flexDirection == YogaFlexDirection.ROW_REVERSE)
+            ) constraints.maxHeight else Constraints.Infinity
+        IntrinsicMinMeasurementMaxConstraints(maxWidth = width, maxHeight = height)
+    } else {
+        IntrinsicMinMeasurementMaxConstraints(maxWidth = Constraints.Infinity, maxHeight = Constraints.Infinity)
+    }
+}
+
+private fun clearParentNodeIfNecessary(childNode: YogaNode) {
+    childNode.owner?.let { childParent ->
+        val index = childParent.indexOf(childNode)
+        if (index > -1) {
+            childParent.removeChildAt(index)
+        }
+    }
+}
+
+private data class IntrinsicMinMeasurementMaxConstraints(
+    val maxWidth: Int,
+    val maxHeight: Int
+)
