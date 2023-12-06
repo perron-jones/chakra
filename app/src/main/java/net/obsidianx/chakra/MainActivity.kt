@@ -44,6 +44,7 @@ class MainActivity : ComponentActivity() {
 
         Chakra.init(this)
         Chakra.debugLogging = true
+        Chakra.isTextWrappingEnabled = true
 
         setContent {
             var page by remember { mutableStateOf(Page.Home) }

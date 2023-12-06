@@ -6,8 +6,8 @@ import com.facebook.yoga.YogaMeasureMode
 import com.facebook.yoga.YogaMeasureOutput
 import com.facebook.yoga.YogaNode
 import net.obsidianx.chakra.Chakra
-import net.obsidianx.chakra.debug.address
 import net.obsidianx.chakra.types.FlexNodeData
+import kotlin.math.min
 
 fun measureNode(
     node: YogaNode,
@@ -28,8 +28,16 @@ fun measureNode(
     val intrinsicMaxWidth = nodeData.maxWidth + paddingStart + paddingEnd
     val intrinsicMaxHeight = nodeData.maxHeight + paddingTop + paddingBottom
 
-    val measuredWidth = reconcile(widthMode, width, intrinsicMinWidth, intrinsicMaxWidth)
-    val measuredHeight = reconcile(heightMode, height, intrinsicMinHeight, intrinsicMaxHeight)
+    val measuredWidth = if (Chakra.isTextWrappingEnabled) {
+        reconcile(widthMode, width, intrinsicMinWidth, intrinsicMaxWidth)
+    } else {
+        reconcile(widthMode, width, intrinsicMinWidth)
+    }
+    val measuredHeight = if (Chakra.isTextWrappingEnabled) {
+        reconcile(heightMode, height, intrinsicMinHeight, intrinsicMaxHeight)
+    } else {
+        reconcile(heightMode, height, intrinsicMinHeight)
+    }
     val tag = (node.data as? FlexNodeData)?.debugTag ?: "??"
     log(
         "tag: $tag " +
@@ -51,6 +59,13 @@ private fun log(msg: String) {
         Log.d("Chakra", "[measureNode] $msg")
     }
 }
+
+private fun reconcile(mode: YogaMeasureMode, size: Float, intrinsicSize: Float): Float =
+    when (mode) {
+        YogaMeasureMode.UNDEFINED -> intrinsicSize
+        YogaMeasureMode.EXACTLY -> size.takeIf { it != 0f } ?: intrinsicSize
+        YogaMeasureMode.AT_MOST -> min(size, intrinsicSize)
+    }
 
 private fun reconcile(mode: YogaMeasureMode, size: Float, intrinsicMinSize: Float, intrinsicMaxSize: Float): Float =
     when (mode) {

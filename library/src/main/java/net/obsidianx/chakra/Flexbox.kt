@@ -206,8 +206,15 @@ fun Flexbox(
 
                 // configure node
                 if (!childNodeData.isContainer) {
-                    val maxIntrinsicWidth = childMeasurable.maxIntrinsicWidth(constraints.maxHeight)
-                    val maxIntrinsicHeight = childMeasurable.maxIntrinsicHeight(constraints.maxWidth)
+                    val maxIntrinsicWidth: Int
+                    val maxIntrinsicHeight: Int
+                    if (Chakra.isTextWrappingEnabled) {
+                        maxIntrinsicWidth = childMeasurable.maxIntrinsicWidth(constraints.maxHeight)
+                        maxIntrinsicHeight = childMeasurable.maxIntrinsicHeight(constraints.maxWidth)
+                    } else {
+                        maxIntrinsicWidth = Int.MAX_VALUE
+                        maxIntrinsicHeight = Int.MAX_VALUE
+                    }
                     log("[Instrinsic] constraints for calculating max intrinsics for ${childNodeData.debugTag}: (${constraints.maxWidth}, ${constraints.maxHeight})")
                     childNode.setMeasureFunction(::measureNode)
 
@@ -414,13 +421,19 @@ private fun getMaxConstraintForIntrinsicMinMeasure(
     childNodeData: FlexNodeData,
     constraints: Constraints
 ): IntrinsicMinMeasurementMaxConstraints {
-    val width = if (childNodeData.isContainer
-        && (childNodeData.style.flexDirection == YogaFlexDirection.COLUMN
-                || childNodeData.style.flexDirection == YogaFlexDirection.COLUMN_REVERSE)
-    ) constraints.maxWidth else Constraints.Infinity
-    val height = if(childNodeData.isContainer && (childNodeData.style.flexDirection == YogaFlexDirection.ROW
-                || childNodeData.style.flexDirection == YogaFlexDirection.ROW_REVERSE)) constraints.maxHeight else Constraints.Infinity
-    return IntrinsicMinMeasurementMaxConstraints(maxWidth = width, maxHeight = height)
+    return if (Chakra.isTextWrappingEnabled) {
+        val width = if (childNodeData.isContainer
+            && (childNodeData.style.flexDirection == YogaFlexDirection.COLUMN
+                    || childNodeData.style.flexDirection == YogaFlexDirection.COLUMN_REVERSE)
+        ) constraints.maxWidth else Constraints.Infinity
+        val height =
+            if (childNodeData.isContainer && (childNodeData.style.flexDirection == YogaFlexDirection.ROW
+                        || childNodeData.style.flexDirection == YogaFlexDirection.ROW_REVERSE)
+            ) constraints.maxHeight else Constraints.Infinity
+        IntrinsicMinMeasurementMaxConstraints(maxWidth = width, maxHeight = height)
+    } else {
+        IntrinsicMinMeasurementMaxConstraints(maxWidth = Constraints.Infinity, maxHeight = Constraints.Infinity)
+    }
 }
 
 private fun clearParentNodeIfNecessary(childNode: YogaNode) {
