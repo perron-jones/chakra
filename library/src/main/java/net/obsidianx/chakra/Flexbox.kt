@@ -206,14 +206,11 @@ fun Flexbox(
 
                 // configure node
                 if (!childNodeData.isContainer) {
-                    val maxIntrinsicWidth: Int
-                    val maxIntrinsicHeight: Int
+                    var maxIntrinsicWidth: Int? = null
+                    var maxIntrinsicHeight: Int? = null
                     if (Chakra.isTextWrappingEnabled) {
                         maxIntrinsicWidth = childMeasurable.maxIntrinsicWidth(constraints.maxHeight)
                         maxIntrinsicHeight = childMeasurable.maxIntrinsicHeight(constraints.maxWidth)
-                    } else {
-                        maxIntrinsicWidth = Int.MAX_VALUE
-                        maxIntrinsicHeight = Int.MAX_VALUE
                     }
                     log("[Instrinsic] constraints for calculating max intrinsics for ${childNodeData.debugTag}: (${constraints.maxWidth}, ${constraints.maxHeight})")
                     childNode.setMeasureFunction(::measureNode)
@@ -229,8 +226,8 @@ fun Flexbox(
 
                     childNodeData.minWidth = minWidth
                     childNodeData.minHeight = minHeight
-                    childNodeData.maxWidth = maxIntrinsicWidth.toFloat()
-                    childNodeData.maxHeight = maxIntrinsicHeight.toFloat()
+                    maxIntrinsicWidth?.let { childNodeData.maxWidth = it.toFloat() }
+                    maxIntrinsicHeight?.let { childNodeData.maxHeight = it.toFloat() }
                 } else {
                     minWidth = max(childNodeData.minWidth, childNode.width.asFloatOrZero)
                     minHeight = max(childNodeData.minHeight, childNode.height.asFloatOrZero)
