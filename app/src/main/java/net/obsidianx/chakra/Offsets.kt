@@ -4,16 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import net.obsidianx.chakra.debug.debugTag
-import net.obsidianx.chakra.modifiers.basis
-import net.obsidianx.chakra.modifiers.border
-import net.obsidianx.chakra.modifiers.flex
-import net.obsidianx.chakra.modifiers.gap
-import net.obsidianx.chakra.modifiers.grow
-import net.obsidianx.chakra.modifiers.height
-import net.obsidianx.chakra.modifiers.margin
-import net.obsidianx.chakra.modifiers.padding
-import net.obsidianx.chakra.modifiers.shrink
 
 @Composable
 fun Offsets() {
@@ -49,7 +39,7 @@ fun Offsets() {
                     OutlinedText("Two")
                 }
 
-                FlexColumn(modifier = Modifier.flex { debugTag("layer2-2") }) {
+                FlexColumn(modifier = Modifier.flex { /*debugTag("layer2-2")*/ }) {
                     FlexRow(modifier = Modifier.flex { margin(bottom = 10.dp) }) {
                         OutlinedText("One", modifier = grow)
                         OutlinedText("Two", modifier = grow.flex { margin(start = 10.dp) })

@@ -12,9 +12,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import net.obsidianx.chakra.modifiers.alignItems
-import net.obsidianx.chakra.modifiers.flex
-import net.obsidianx.chakra.modifiers.padding
 import net.obsidianx.chakra.types.FlexAlign
 
 @Composable

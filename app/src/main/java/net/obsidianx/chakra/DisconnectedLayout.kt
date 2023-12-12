@@ -9,14 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import net.obsidianx.chakra.debug.debugDump
-import net.obsidianx.chakra.debug.debugTag
-import net.obsidianx.chakra.modifiers.alignItems
-import net.obsidianx.chakra.modifiers.fitMinContent
-import net.obsidianx.chakra.modifiers.flex
-import net.obsidianx.chakra.modifiers.gap
-import net.obsidianx.chakra.modifiers.justifyContent
-import net.obsidianx.chakra.modifiers.positionType
 import net.obsidianx.chakra.types.FlexAlign
 import net.obsidianx.chakra.types.FlexJustify
 import net.obsidianx.chakra.types.FlexPositionType
@@ -31,9 +23,9 @@ fun DisconnectedLayout() {
         FlexRow(modifier = Modifier.flex { /*debugDump()*/ }) {
             Text("One")
             Box {
-                net.obsidianx.chakra.FlexRow(
+                FlexRow(
                     modifier = Modifier.flex {
-                        fitMinContent()
+                        depthLayout()
                         debugDump()
                     }
                 ) {
@@ -49,11 +41,11 @@ fun DisconnectedLayout() {
 
         FlexRow(
             modifier = Modifier.flex {
+                depthLayout()
                 alignItems(FlexAlign.Center)
                 justifyContent(FlexJustify.Center)
                 debugTag("zstack")
                 debugDump()
-                fitMinContent()
             }
         ) {
             Box(

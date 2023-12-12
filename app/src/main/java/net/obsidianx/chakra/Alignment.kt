@@ -9,12 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import net.obsidianx.chakra.modifiers.alignItems
-import net.obsidianx.chakra.modifiers.direction
-import net.obsidianx.chakra.modifiers.flex
-import net.obsidianx.chakra.modifiers.height
-import net.obsidianx.chakra.modifiers.justifyContent
-import net.obsidianx.chakra.modifiers.width
 import net.obsidianx.chakra.types.FlexAlign
 import net.obsidianx.chakra.types.FlexDirection
 import net.obsidianx.chakra.types.FlexJustify

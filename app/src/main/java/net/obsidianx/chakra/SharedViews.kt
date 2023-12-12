@@ -9,10 +9,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import net.obsidianx.chakra.debug.debugTag
-import net.obsidianx.chakra.modifiers.direction
-import net.obsidianx.chakra.modifiers.flex
-import net.obsidianx.chakra.modifiers.padding
 import net.obsidianx.chakra.types.FlexDirection
 
 @Composable
@@ -49,21 +45,7 @@ fun OutlinedText(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun FlexRow(modifier: Modifier = Modifier, content: @Composable FlexboxScope.() -> Unit) {
-    Flexbox(
-        modifier = modifier
-            .flex { direction(FlexDirection.Row) }
-            .border(width = 1.dp, color = Color.Red.copy(alpha = 0.5f))
-    ) {
-        content()
-    }
-}
-
-@Composable
-fun FlexboxScope.FlexRow(
-    modifier: Modifier = Modifier,
-    content: @Composable FlexboxScope.() -> Unit
-) {
+fun FlexRow(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Flexbox(
         modifier = modifier
             .flex { direction(FlexDirection.Row) }
@@ -76,23 +58,7 @@ fun FlexboxScope.FlexRow(
 @Composable
 fun FlexColumn(
     modifier: Modifier = Modifier,
-    content: @Composable FlexboxScope.() -> Unit
-) {
-    Flexbox(
-        modifier = modifier
-            .flex {
-                direction(FlexDirection.Column)
-            }
-            .border(width = 1.dp, color = Color.Red.copy(alpha = 0.5f))
-    ) {
-        content()
-    }
-}
-
-@Composable
-fun FlexboxScope.FlexColumn(
-    modifier: Modifier = Modifier,
-    content: @Composable FlexboxScope.() -> Unit
+    content: @Composable () -> Unit
 ) {
     Flexbox(
         modifier = modifier

@@ -4,11 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import net.obsidianx.chakra.modifiers.basis
-import net.obsidianx.chakra.modifiers.flex
-import net.obsidianx.chakra.modifiers.grow
-import net.obsidianx.chakra.modifiers.height
-import net.obsidianx.chakra.modifiers.shrink
 
 @Composable
 fun Flex() {

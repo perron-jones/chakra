@@ -1,13 +1,16 @@
 package net.obsidianx.chakra.debug
 
+import android.util.Log
 import com.facebook.yoga.YogaEdge
 import com.facebook.yoga.YogaFlexDirection
 import com.facebook.yoga.YogaGutter
 import com.facebook.yoga.YogaNode
 import com.facebook.yoga.YogaValue
 import com.facebook.yoga.YogaWrap
+import net.obsidianx.chakra.Chakra
 import net.obsidianx.chakra.layout.isSet
 import net.obsidianx.chakra.types.FlexNodeData
+import net.obsidianx.chakra.types.isChild
 
 enum class DebugDumpFlag {
     Alignment,
@@ -48,6 +51,14 @@ private fun getEdges(withUnset: Boolean, getter: (YogaEdge) -> Any): String =
         getter(edge).takeIf { withUnset || (it as? YogaValue)?.isSet ?: ((it as? Float)?.isNaN() != true) }
             ?.let { value -> "${edge.toString().lowercase()}: $value" }
     }.joinToString()
+
+internal fun YogaNode.log(msg: () -> String) {
+    if (Chakra.debugLogging) {
+        val nodeData = data as? FlexNodeData
+        val top = if (nodeData?.isChild == false) "*" else ""
+        Log.d(nodeData?.debugLogTag ?: DEFAULT_LOG_TAG, "[$address]$top ${msg()}")
+    }
+}
 
 internal fun YogaNode.dump(flags: Set<DebugDumpFlag> = DebugDumpFlag.ALL, depth: Int = 0): String {
     val nodeData = data as? FlexNodeData
@@ -133,8 +144,8 @@ internal fun YogaNode.dump(flags: Set<DebugDumpFlag> = DebugDumpFlag.ALL, depth:
     ).filterNotNull().joinToString("\n")
 
     val intrinsicsConfig = """
-        |$indent  Intrinsic width: ${nodeData?.minWidth}
-        |$indent  Intrinsic height: ${nodeData?.minHeight}
+        |$indent  Max intrinsic width: ${nodeData?.intrinsicMax?.width}
+        |$indent  Max intrinsic height: ${nodeData?.intrinsicMax?.height}
     """.trimMargin()
 
     val layoutConfig = """

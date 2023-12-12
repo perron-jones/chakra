@@ -9,20 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import net.obsidianx.chakra.debug.debugDump
-import net.obsidianx.chakra.debug.debugTag
-import net.obsidianx.chakra.modifiers.alignItems
-import net.obsidianx.chakra.modifiers.border
-import net.obsidianx.chakra.modifiers.direction
-import net.obsidianx.chakra.modifiers.fitMinContent
-import net.obsidianx.chakra.modifiers.flex
-import net.obsidianx.chakra.modifiers.grow
-import net.obsidianx.chakra.modifiers.height
-import net.obsidianx.chakra.modifiers.justifyContent
-import net.obsidianx.chakra.modifiers.padding
-import net.obsidianx.chakra.modifiers.positionType
-import net.obsidianx.chakra.modifiers.shrink
-import net.obsidianx.chakra.modifiers.width
 import net.obsidianx.chakra.types.FlexAlign
 import net.obsidianx.chakra.types.FlexDirection
 import net.obsidianx.chakra.types.FlexJustify
@@ -44,7 +30,7 @@ fun DepthLayout() {
     ) {
         Flexbox(modifier = Modifier
             .flex {
-                fitMinContent()
+                depthLayout()
                 debugTag("depth-layer1")
                 alignItems(FlexAlign.Center)
                 justifyContent(FlexJustify.Center)
@@ -56,12 +42,11 @@ fun DepthLayout() {
             Flexbox(
                 modifier = Modifier
                     .flex {
-                        fitMinContent()
+                        depthLayout()
                         debugTag("depth-layer2")
                         alignItems(FlexAlign.Center)
                         justifyContent(FlexJustify.Center)
                         padding(16.dp)
-                        positionType(FlexPositionType.Absolute)
                     }
                     .border(1.dp, Color.Green)
             ) {
@@ -71,7 +56,6 @@ fun DepthLayout() {
                         .border(1.dp, Color.Blue)
                         .flex {
                             debugTag("text")
-                            positionType(FlexPositionType.Absolute)
                         }
                 )
             }
@@ -89,7 +73,7 @@ fun DepthLayout() {
         .border(1.dp, Color.Red)) {
         Flexbox(modifier = Modifier
             .flex {
-                fitMinContent()
+                depthLayout()
                 justifyContent(FlexJustify.Center)
                 alignItems(FlexAlign.Center)
             }
@@ -116,19 +100,13 @@ fun DepthLayout() {
         .border(1.dp, Color.Red)) {
         Flexbox(modifier = Modifier
             .flex {
-                fitMinContent()
+                depthLayout()
                 justifyContent(FlexJustify.Center)
                 alignItems(FlexAlign.Center)
             }
             .border(1.dp, Color.Blue)) {
-            Text(
-                modifier = Modifier.flex { positionType(FlexPositionType.Absolute) },
-                text = "Hello"
-            )
-            Text(
-                modifier = Modifier.flex { positionType(FlexPositionType.Absolute) },
-                text = "World"
-            )
+            Text(text = "Hello")
+            Text(text = "World")
         }
     }
 
@@ -142,27 +120,22 @@ fun DepthLayout() {
         .border(1.dp, Color.Red)) {
         Flexbox(modifier = Modifier
             .flex {
-                fitMinContent()
+                depthLayout()
                 justifyContent(FlexJustify.Center)
                 alignItems(FlexAlign.Center)
             }
             .border(1.dp, Color.Blue)) {
             Flexbox(modifier = Modifier
                 .flex {
-                    fitMinContent()
-                    positionType(FlexPositionType.Absolute)
+                    depthLayout()
                     width(50f)
                     height(50f)
+                    minWidth(1.dp)
+                    minHeight(1.dp)
                 }
                 .border(1.dp, Color.Green)) {
-                Text(
-                    modifier = Modifier.flex { positionType(FlexPositionType.Absolute) },
-                    text = "Hello"
-                )
-                Text(
-                    modifier = Modifier.flex { positionType(FlexPositionType.Absolute) },
-                    text = "World"
-                )
+                Text(text = "Hello")
+                Text(text = "World")
             }
         }
     }

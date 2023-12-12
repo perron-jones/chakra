@@ -8,17 +8,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import net.obsidianx.chakra.debug.DebugDumpFlag
-import net.obsidianx.chakra.debug.debugDump
-import net.obsidianx.chakra.debug.debugTag
-import net.obsidianx.chakra.modifiers.direction
-import net.obsidianx.chakra.modifiers.flex
-import net.obsidianx.chakra.modifiers.height
-import net.obsidianx.chakra.modifiers.shrink
-import net.obsidianx.chakra.modifiers.width
 import net.obsidianx.chakra.types.FlexDirection
 
 @Composable
-fun FlexboxScope.GreenBox(content: @Composable FlexboxScope.() -> Unit) {
+fun GreenBox(content: @Composable () -> Unit = {}) {
     Flexbox(
         modifier = Modifier
             .flex {
@@ -35,7 +28,7 @@ fun FlexboxScope.GreenBox(content: @Composable FlexboxScope.() -> Unit) {
 }
 
 @Composable
-fun FlexboxScope.BlueBox(content: (@Composable FlexboxScope.() -> Unit)? = null) {
+fun BlueBox(content: @Composable () -> Unit = {}) {
     Flexbox(
         modifier = Modifier
             .flex {
@@ -46,14 +39,13 @@ fun FlexboxScope.BlueBox(content: (@Composable FlexboxScope.() -> Unit)? = null)
                 debugTag("BlueBox")
             }
             .background(Color.Blue)
-            .border(width = 1.dp, color = Color.Yellow)
-    ) {
-        content?.invoke(this)
-    }
+            .border(width = 1.dp, color = Color.Yellow),
+        content = content,
+    )
 }
 
 @Composable
-fun FlexboxScope.MagentaBox(content: @Composable FlexboxScope.() -> Unit = {}) {
+fun MagentaBox(content: @Composable () -> Unit = {}) {
     Flexbox(
         modifier = Modifier
             .flex {
@@ -76,11 +68,11 @@ fun Shrink() {
             debugDump(flags = DebugDumpFlag.ALL_SET)
         }
     ) {
-        repeat(4) { green ->
+        repeat(3) { green ->
             GreenBox {
-                repeat(green) {
+                repeat(green+1) {
                     BlueBox {
-                        repeat(green) {
+                        repeat(green+1) {
                             MagentaBox {
                                 Text("Hi", softWrap = false, maxLines = 1)
                             }
