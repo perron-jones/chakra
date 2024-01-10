@@ -57,6 +57,7 @@ dependencies {
     implementation libs.compose.graphics
     implementation libs.compose.tooling.preview
     implementation libs.androidx.material3
+    implementation libs.devplatform.protos
 
     implementation project(':library')
 

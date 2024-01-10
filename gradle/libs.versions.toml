@@ -4,6 +4,7 @@ androidx-junit = "1.1.5"
 appcompat = "1.6.1"
 compose-bom = "2023.06.01"
 core-ktx = "1.10.0"
+devplatform = "0.10.10-next-2023-11-07-98f59cb73"
 espresso-core = "3.5.1"
 facebook-soloader = "0.10.4"
 facebook-yoga = "2.0.0"
@@ -25,6 +26,7 @@ compose-layout = { module = "androidx.compose.foundation:foundation" }
 compose-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-util = { module = "androidx.compose.ui:ui-util" }
+devplatform-protos = { module = "com.reddit.devvit:protos-android", version.ref = "devplatform" }
 facebook-soloader = { module = "com.facebook.soloader:soloader", version.ref = "facebook-soloader" }
 facebook-yoga = { module = "com.facebook.yoga:yoga", version.ref = "facebook-yoga" }
 google-material = { module = "com.google.android.material:material", version.ref = "material" }

@@ -195,8 +195,8 @@ internal class YogaMeasurePolicy(private val node: YogaNode, private val nodeDat
             }
         }
 
-        val applyingMeasurements = constraints.hasFixedWidth && constraints.hasFixedHeight && childLayout
-        if (applyingMeasurements) {
+        val isFixedContainer = constraints.hasFixedWidth && constraints.hasFixedHeight && childLayout
+        if (isFixedContainer) {
             node.log { "[Measure] Parent container assigned size: (w: ${constraints.maxWidth}, h: ${constraints.maxHeight})" }
         } else {
             node.log { "[Measure] Measuring intrinsic sizes of ${node.childCount} child nodes (maxWidth: $constraintWidth; maxHeight: $constraintHeight)" }
@@ -218,11 +218,11 @@ internal class YogaMeasurePolicy(private val node: YogaNode, private val nodeDat
                 childNode.positionType = YogaPositionType.ABSOLUTE
             }
 
-            if (applyingMeasurements) {
+            if (isFixedContainer) {
                 return@fastForEachIndexed
             }
 
-            node.log { "[Measure] Measuring child[$index][${childNode.address}]" }
+            node.log { "[Measure] Measuring child[$index][${childNode.address}] with Constraints (w: $constraintWidth, h: $constraintHeight)" }
 
             val maxWidth = measurable.maxIntrinsicWidth(constraintHeight)
             val maxHeight = measurable.maxIntrinsicHeight(constraintWidth)
@@ -233,6 +233,7 @@ internal class YogaMeasurePolicy(private val node: YogaNode, private val nodeDat
                     maxWidth != childNodeData.intrinsicMax?.width ||
                     maxHeight != childNodeData.intrinsicMax?.height
 
+            val oldIntrinsics = childNodeData.intrinsicMax
             childNodeData.intrinsicMax = IntSize(maxWidth, maxHeight)
 
             if (!childNodeData.isContainer) {
@@ -241,14 +242,14 @@ internal class YogaMeasurePolicy(private val node: YogaNode, private val nodeDat
                 if (dirty) {
                     childNode.dirty()
                 }
-                node.log { "[Measure] Size of leaf node [$index][${childNode.address}] (w: $maxWidth, h: $maxHeight)${if (dirty) " (changed)" else ""}" }
+                node.log { "[Measure] Size of leaf node [$index][${childNode.address}] (w: $maxWidth, h: $maxHeight)${if (dirty) " (changed from (w: ${oldIntrinsics?.width ?: "N/P"}, h: ${oldIntrinsics?.height ?: "N/P"})" else ""}" }
             } else {
                 node.log { "[Measure] Size of container node [$index][${childNode.address}] (w: $maxWidth, h: $maxHeight)" }
             }
         }
 
         // Measurement is being provided by parent, don't continue with calculateLayout()
-        if (applyingMeasurements) {
+        if (isFixedContainer) {
             return Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
         }
 

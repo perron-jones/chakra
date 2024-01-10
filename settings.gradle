@@ -10,6 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://artifactory.build.ue1.snooguts.net/artifactory/reddit-maven-prod" }
     }
 }
 rootProject.name = "chakra"
