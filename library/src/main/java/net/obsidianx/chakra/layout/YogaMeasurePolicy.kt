@@ -185,10 +185,23 @@ internal class YogaMeasurePolicy(private val node: YogaNode, private val nodeDat
         var constraintHeight = constraints.maxHeight
         if (intrinsic && childLayout) {
             // get full constraints from parent instead of just doing one dimension
-            (node.owner?.data as? FlexNodeData)?.nodeState?.constraints?.let { parentConstraints ->
+            (node.owner?.data as? FlexNodeData)?.nodeState?.let { nodeState ->
+                val parentConstraints = nodeState.constraints
                 node.log { "[Measure] Parent constraints: $parentConstraints" }
-                constraintWidth = parentConstraints.maxWidth
-                constraintHeight = parentConstraints.maxHeight
+                // conditional needed to avoid the following exception
+                // java.lang.IllegalArgumentException: Can't represent a size of <size> in Constraints
+                constraintWidth = if(parentConstraints.maxWidth == Constraints.Infinity){
+                    Constraints.Infinity
+                } else {
+                    // must account for horizontal padding to provide accurate width constraints when calculating intrinsic height
+                    parentConstraints.maxWidth - (nodeState.node?.horizontalPadding?.toInt() ?: 0)
+                }
+                constraintHeight = if(parentConstraints.maxHeight == Constraints.Infinity) {
+                    Constraints.Infinity
+                } else {
+                    // must account for vertical padding to provide accurate width constraints when calculating intrinsic width
+                    parentConstraints.maxHeight - (nodeState.node?.verticalPadding?.toInt() ?: 0)
+                }
             }
             if (lastMeasurement.isSpecified) {
                 return lastMeasurement
